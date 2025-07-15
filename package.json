@@ -4,6 +4,7 @@
   "description": "MERN stack website for Lance and Yuri Kids Spot Naga City",
   "main": "index.js",
   "scripts": {
+    "setup": "node setup.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "cd api && npm run dev",
     "client": "cd client && npm start",

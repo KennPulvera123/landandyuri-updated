@@ -1,160 +1,199 @@
-# Lance and Yuri Kids Spot Naga City - MERN Stack Website
+# Lance & Yuri Kids Spot - MERN Stack Application
 
-A full-stack web application for Lance and Yuri Kids Spot Naga City, a pediatric therapy center for children with special needs. Built with the MERN stack (MongoDB, Express, React, Node.js).
+A modern pediatric therapy booking website built with MongoDB, Express.js, React.js, and Node.js.
 
-## Features
+## 🚀 Quick Start
 
-- 🏠 **Landing Page** with service information
-- 📅 **Guest Booking System** for assessment appointments
-- 💳 **Payment Processing** with GCash and bank transfer options
-- 👨‍💼 **Admin Dashboard** for managing appointments
-- 📱 **Responsive Design** with beautiful animations
-- 🔒 **Secure Authentication** for admin access
+### Prerequisites
+Before running this application, make sure you have the following installed:
 
-## Project Structure
+- **Node.js** (version 14 or higher) - [Download here](https://nodejs.org/)
+- **MongoDB** - [Download here](https://www.mongodb.com/try/download/community) OR use [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (cloud version)
+- **Git** - [Download here](https://git-scm.com/downloads)
 
-```
-lance-yuri-kids-spot/
-├── api/                    # Backend API
-│   ├── features/          # Feature-based modules
-│   │   ├── bookings/      # Booking management
-│   │   ├── users/         # User management
-│   │   └── admin/         # Admin functionality
-│   ├── server.js          # Express server
-│   └── package.json       # Backend dependencies
-├── client/                # React frontend
-│   ├── public/            # Public assets
-│   ├── src/
-│   │   ├── features/      # Feature-based components
-│   │   │   └── ui/        # All React components
-│   │   ├── App.jsx        # Main App component
-│   │   └── index.js       # React entry point
-│   └── package.json       # Frontend dependencies
-└── package.json           # Root package.json
-```
+### 📦 Installation
 
-## Prerequisites
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/lance-yuri-kids-spot.git
+   cd lance-yuri-kids-spot
+   ```
 
-- Node.js (v14 or higher)
-- MongoDB (local or MongoDB Atlas)
-- npm or yarn
+2. **Install all dependencies:**
+   ```bash
+   npm run install-all
+   ```
+   This command will install dependencies for the root, API, and client folders.
 
-## Installation
+3. **Set up environment variables:**
+   ```bash
+   cd api
+   cp env.template .env
+   ```
+   
+   Edit the `.env` file with your configuration:
+   ```
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/lance-yuri-kids-spot
+   JWT_SECRET=your-secret-key-here
+   NODE_ENV=development
+   ```
 
-1. Clone the repository:
-```bash
-git clone [repository-url]
-cd "Lance and Yuri Naga"
-```
+4. **Start the application:**
+   ```bash
+   npm run dev
+   ```
 
-2. Install all dependencies:
-```bash
-npm run install-all
-```
+## 🖥️ Running the Application
 
-3. Set up environment variables:
-   - Copy `api/env.template` to `api/.env`
-   - Update the values in `.env` file:
-```env
-MONGODB_URI=mongodb://localhost:27017/lance-yuri-kids
-PORT=5000
-NODE_ENV=development
-JWT_SECRET=your_jwt_secret_key_here
-ADMIN_EMAIL=test@gmail.com
-ADMIN_PASSWORD=admin123
-```
-
-## Running the Application
-
-### Development Mode
-
-To run both frontend and backend concurrently:
+### Development Mode (Recommended)
+Run both backend and frontend simultaneously:
 ```bash
 npm run dev
 ```
 
-This will start:
-- Backend API on http://localhost:5000
-- React frontend on http://localhost:3000
+### Production Mode
+Build and start the application:
+```bash
+npm run build
+npm start
+```
 
-### Run Backend Only
+### Individual Services
+Run services separately:
+
+**Backend only:**
 ```bash
 npm run server
 ```
 
-### Run Frontend Only
+**Frontend only:**
 ```bash
 npm run client
 ```
 
-## Usage
+## 🌐 Access Points
 
-### Guest Booking
-1. Visit the homepage
-2. Click "Book Assessment" button
-3. Fill in the booking form
-4. Proceed to payment
-5. Complete payment confirmation
+After running the application:
 
-### Admin Dashboard
-1. Visit `/admin`
-2. Login with credentials:
-   - Email: test@gmail.com
-   - Password: admin123
-3. Manage appointments and view bookings
+- **Frontend (React):** http://localhost:3000
+- **Backend API:** http://localhost:5000
+- **Admin Panel:** http://localhost:3000/admin
 
-## API Endpoints
+### Default Admin Credentials
+- **Email:** test@gmail.com
+- **Password:** admin123
 
-### Bookings
-- `POST /api/bookings` - Create new booking
-- `GET /api/bookings` - Get all bookings
-- `GET /api/bookings/:id` - Get single booking
-- `PATCH /api/bookings/:id/status` - Update booking status
-- `PATCH /api/bookings/:id/payment` - Update payment status
+## 📁 Project Structure
 
-### Admin
-- `POST /api/admin/login` - Admin authentication
-
-## CSS Files Required
-
-The project references these CSS files that need to be created:
-- `client/src/App.css` - Main app styles
-- `client/src/index.css` - Global styles
-- `styles.css` - Landing page styles
-- `admin-styles.css` - Admin dashboard styles
-- `payment-styles.css` - Payment page styles
-
-You'll need to create these CSS files or import the styles from your existing HTML design.
-
-## Deployment
-
-### Build for Production
-```bash
-npm run build
+```
+lance-yuri-kids-spot/
+├── api/                    # Backend (Node.js + Express)
+│   ├── features/          # API routes and features
+│   │   ├── admin/         # Admin authentication
+│   │   └── ...
+│   ├── middleware/        # Express middleware
+│   ├── server.js          # Main server file
+│   └── package.json       # Backend dependencies
+├── client/                # Frontend (React)
+│   ├── src/
+│   ├── public/
+│   └── package.json       # Frontend dependencies
+├── package.json           # Root package.json with scripts
+└── README.md             # This file
 ```
 
-### Start Production Server
+## 🔧 Available Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start both backend and frontend in development mode |
+| `npm run server` | Start only the backend server |
+| `npm run client` | Start only the frontend client |
+| `npm run install-all` | Install dependencies for all parts of the project |
+| `npm run build` | Build the frontend for production |
+| `npm start` | Start the application in production mode |
+
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+**1. Port already in use:**
 ```bash
-npm start
+# Kill process using port 3000 or 5000
+npx kill-port 3000
+npx kill-port 5000
 ```
 
-## Technologies Used
+**2. MongoDB connection error:**
+- Make sure MongoDB is running locally, or
+- Update `MONGODB_URI` in `.env` file with your MongoDB Atlas connection string
 
-- **Frontend**: React, React Router, Axios
-- **Backend**: Node.js, Express, MongoDB, Mongoose
-- **Styling**: CSS3 with animations
-- **Icons**: Font Awesome
-- **Fonts**: Google Fonts (Inter)
+**3. Dependencies issues:**
+```bash
+# Clear npm cache and reinstall
+npm cache clean --force
+rm -rf node_modules package-lock.json
+npm run install-all
+```
 
-## Future Enhancements
+**4. Permission errors (Mac/Linux):**
+```bash
+sudo chown -R $(whoami) ~/.npm
+```
 
-- Email notifications for bookings
-- SMS integration for appointment reminders
-- Online payment gateway integration
-- User registration and login system
-- Appointment rescheduling feature
-- Multi-language support
+### Environment Variables
 
-## License
+Create a `.env` file in the `api` folder with these variables:
 
-This project is proprietary software for Lance and Yuri Kids Spot Naga City. 
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/lance-yuri-kids-spot
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key-here
+
+# Email Configuration (if using email features)
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-email-password
+```
+
+## 🚀 Deployment
+
+### Heroku Deployment
+1. Install Heroku CLI
+2. Login to Heroku: `heroku login`
+3. Create app: `heroku create your-app-name`
+4. Set environment variables: `heroku config:set MONGODB_URI=your-mongodb-uri`
+5. Deploy: `git push heroku main`
+
+### Vercel Deployment (Frontend only)
+1. Install Vercel CLI: `npm i -g vercel`
+2. In client folder: `vercel --prod`
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push to branch: `git push origin feature-name`
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the ISC License.
+
+## 📞 Support
+
+If you encounter any issues:
+1. Check the troubleshooting section above
+2. Search existing issues on GitHub
+3. Create a new issue with detailed information
+
+---
+
+**Happy coding! 🎉** 
