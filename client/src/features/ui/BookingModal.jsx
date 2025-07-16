@@ -10,6 +10,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     guardianRelation: '',
     otherRelationship: '',
     guardianPhone: '',
+    guardianAddress: '',
     childName: '',
     childBirthday: '',
     appointmentDate: '',
@@ -21,6 +22,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // 'idle', 'saving', 'saved'
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [professionalAvailability, setProfessionalAvailability] = useState({});
+  const [alternativeProfessionals, setAlternativeProfessionals] = useState([]);
+  const [showWaitlist, setShowWaitlist] = useState(false);
 
   // Load saved form data on component mount
   useEffect(() => {
@@ -46,9 +52,39 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     }
   }, []);
 
-  // Save form data to localStorage whenever it changes
+  // Auto-save form data with debouncing and meaningful data check
   useEffect(() => {
-    localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+    // Check if form has meaningful data to save
+    const hasMeaningfulData = formData.guardianName || 
+                             formData.childName || 
+                             formData.guardianPhone || 
+                             formData.branchLocation ||
+                             formData.appointmentDate;
+    
+    if (!hasMeaningfulData) {
+      setAutoSaveStatus('idle');
+      return;
+    }
+
+    setAutoSaveStatus('saving');
+    setHasUnsavedChanges(true);
+    
+    // Debounce auto-save by 1 second
+    const saveTimeout = setTimeout(() => {
+      try {
+        localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+        setAutoSaveStatus('saved');
+        setHasUnsavedChanges(false);
+        
+        // Reset to idle after 3 seconds
+        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      } catch (error) {
+        console.error('Error auto-saving form data:', error);
+        setAutoSaveStatus('idle');
+      }
+    }, 1000);
+
+    return () => clearTimeout(saveTimeout);
   }, [formData]);
 
   const handleChange = (e) => {
@@ -114,9 +150,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     if (!date || !formData.branchLocation) return;
     
     try {
-      const response = await axios.get(`/api/bookings/availability/${date}?branch=${formData.branchLocation}`);
+      const response = await axios.get(`/api/bookings/availability/${date}?branch=${formData.branchLocation}&professional=${formData.selectedProfessional}`);
       if (response.data.success) {
         setAvailableTimeSlots(response.data.availableSlots);
+        setProfessionalAvailability(response.data.professionalAvailability || {});
       }
     } catch (error) {
       console.error('Error loading time slots:', error);
@@ -128,9 +165,134 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     }
   };
 
-  const handleDateChange = (e) => {
+  const checkProfessionalAvailability = async (professional, date, branch) => {
+    if (!professional || !date || !branch) return;
+    
+    try {
+      const response = await axios.get(`/api/professionals/availability?professional=${professional}&date=${date}&branch=${branch}`);
+      if (response.data.success) {
+        const availability = response.data.availability;
+        setProfessionalAvailability(prev => ({
+          ...prev,
+          [professional]: availability
+        }));
+        
+        // If professional is not available, suggest alternatives
+        if (!availability.isAvailable) {
+          setAlternativeProfessionals(response.data.alternatives || []);
+          setShowWaitlist(true);
+        } else {
+          setAlternativeProfessionals([]);
+          setShowWaitlist(false);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking professional availability:', error);
+      
+      // Mock data for demonstration purposes (remove when API is implemented)
+      const mockAvailability = generateMockAvailability(professional, date, branch);
+      
+      setProfessionalAvailability(prev => ({
+        ...prev,
+        [professional]: mockAvailability.availability
+      }));
+      
+      if (!mockAvailability.availability.isAvailable) {
+        setAlternativeProfessionals(mockAvailability.alternatives);
+        setShowWaitlist(true);
+      } else {
+        setAlternativeProfessionals([]);
+        setShowWaitlist(false);
+      }
+    }
+  };
+
+  // Mock data generator for demonstration (remove when API is implemented)
+  const generateMockAvailability = (professional, date, branch) => {
+    const selectedDate = new Date(date);
+    const dayOfWeek = selectedDate.getDay();
+    
+    // Simulate scenarios based on conditions
+    const scenarios = [
+      // Weekends - reduced availability
+      {
+        condition: dayOfWeek === 0 || dayOfWeek === 6,
+        availability: {
+          isAvailable: false,
+          reason: 'Weekends - Limited availability',
+          nextAvailable: new Date(selectedDate.getTime() + (8 - dayOfWeek) * 24 * 60 * 60 * 1000).toISOString()
+        },
+        alternatives: [
+          {
+            id: 'developmental-pediatrician',
+            name: 'Dr. Maria Santos',
+            specialty: 'Developmental Pediatrician',
+            availability: 'Saturday mornings only'
+          }
+        ]
+      },
+      // Random unavailability simulation
+      {
+        condition: Math.random() > 0.7,
+        availability: {
+          isAvailable: false,
+          reason: 'Professional attending conference',
+          nextAvailable: new Date(selectedDate.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        alternatives: [
+          {
+            id: professional === 'developmental-pediatrician' ? 'occupational-therapist' : 'developmental-pediatrician',
+            name: professional === 'developmental-pediatrician' ? 'Ms. Anna Cruz' : 'Dr. Juan Dela Cruz',
+            specialty: professional === 'developmental-pediatrician' ? 'Occupational Therapist' : 'Developmental Pediatrician',
+            availability: 'Same day available'
+          },
+          {
+            id: 'speech-language-pathologist',
+            name: 'Ms. Linda Garcia',
+            specialty: 'Speech and Language Pathologist',
+            availability: 'Available tomorrow'
+          }
+        ]
+      }
+    ];
+    
+    // Find matching scenario
+    const matchedScenario = scenarios.find(scenario => scenario.condition);
+    
+    if (matchedScenario) {
+      return matchedScenario;
+    }
+    
+    // Default to available
+    return {
+      availability: {
+        isAvailable: true,
+        nextAvailable: null,
+        reason: null
+      },
+      alternatives: []
+    };
+  };
+
+  const handleProfessionalChange = (e) => {
+    const professional = e.target.value;
     handleChange(e);
-    loadTimeSlots(e.target.value);
+    
+    // Check availability when professional is selected
+    if (professional && formData.appointmentDate && formData.branchLocation) {
+      checkProfessionalAvailability(professional, formData.appointmentDate, formData.branchLocation);
+    }
+  };
+
+  const handleDateChange = (e) => {
+    const date = e.target.value;
+    handleChange(e);
+    loadTimeSlots(date);
+    
+    // Also check professional availability for the new date
+    if (formData.selectedProfessional && formData.branchLocation) {
+      checkProfessionalAvailability(formData.selectedProfessional, date, formData.branchLocation);
+    }
   };
 
   const clearSavedData = () => {
@@ -141,6 +303,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
       guardianRelation: '',
       otherRelationship: '',
       guardianPhone: '',
+      guardianAddress: '',
       childName: '',
       childBirthday: '',
       appointmentDate: '',
@@ -149,6 +312,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     });
     setAgeDisplay('Age will be calculated automatically');
     setAvailableTimeSlots([]);
+    setAutoSaveStatus('idle');
+    setHasUnsavedChanges(false);
   };
 
   const handleSubmit = async (e) => {
@@ -174,6 +339,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
       if (response.data.success) {
         // Clear saved form data since submission was successful
         localStorage.removeItem(FORM_STORAGE_KEY);
+        setAutoSaveStatus('idle');
+        setHasUnsavedChanges(false);
         
         // Save booking ID to localStorage for payment page
         localStorage.setItem('currentBooking', JSON.stringify({
@@ -198,9 +365,31 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
         <div className="auth-modal-header">
           <h2>🎈 Guest Assessment Booking ⭐</h2>
           <div className="header-controls">
-            <div className="auto-save-indicator">
-              <i className="fas fa-save"></i>
-              <span>Auto-saved</span>
+            <div className={`auto-save-indicator ${autoSaveStatus}`}>
+              {autoSaveStatus === 'saving' && (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  <span>Saving...</span>
+                </>
+              )}
+              {autoSaveStatus === 'saved' && (
+                <>
+                  <i className="fas fa-check"></i>
+                  <span>Auto-saved</span>
+                </>
+              )}
+              {autoSaveStatus === 'idle' && hasUnsavedChanges && (
+                <>
+                  <i className="fas fa-edit"></i>
+                  <span>Unsaved changes</span>
+                </>
+              )}
+              {autoSaveStatus === 'idle' && !hasUnsavedChanges && (
+                <>
+                  <i className="fas fa-save"></i>
+                  <span>Ready</span>
+                </>
+              )}
             </div>
             <button className="clear-form-btn" onClick={clearSavedData} title="Clear all saved data">
               <i className="fas fa-trash"></i>
@@ -297,6 +486,20 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                   />
                 </div>
               </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="guardianAddress">Complete Address</label>
+                  <input 
+                    type="text" 
+                    id="guardianAddress" 
+                    name="guardianAddress" 
+                    placeholder="House #, Street, Barangay, City, Province" 
+                    value={formData.guardianAddress}
+                    onChange={handleChange}
+                    required 
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Child Information */}
@@ -322,6 +525,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                     name="childBirthday" 
                     value={formData.childBirthday}
                     onChange={handleBirthdayChange}
+                    max={new Date().toISOString().split('T')[0]}
                     required 
                   />
                 </div>
@@ -345,7 +549,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                   id="selectedProfessional" 
                   name="selectedProfessional" 
                   value={formData.selectedProfessional}
-                  onChange={handleChange}
+                  onChange={handleProfessionalChange}
                   required
                 >
                   <option value="">Select a professional...</option>
@@ -354,6 +558,15 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                   <option value="speech-language-pathologist">🗣️ Speech and Language Pathologist</option>
                 </select>
               </div>
+              
+              {/* Important Scheduling Notice */}
+              <div className="scheduling-notice">
+                <div className="notice-content">
+                  <i className="fas fa-info-circle"></i>
+                  <p><strong>📅 Scheduling Policy:</strong> If your selected professional is not available at the time of booking, our secretary will contact you to reschedule your appointment or suggest an alternative time that works for both you and the professional.</p>
+                </div>
+              </div>
+              
               <div className="professional-info">
                 {formData.selectedProfessional === 'developmental-pediatrician' && (
                   <div className="professional-description">
@@ -368,6 +581,94 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                 {formData.selectedProfessional === 'speech-language-pathologist' && (
                   <div className="professional-description">
                     <p><strong>Speech and Language Pathologist:</strong> Specializes in communication disorders, providing assessment and treatment for speech articulation, language development, and communication skills enhancement.</p>
+                  </div>
+                )}
+                
+                {/* Professional Availability Status */}
+                {formData.selectedProfessional && formData.appointmentDate && professionalAvailability[formData.selectedProfessional] && (
+                  <div className="professional-availability">
+                    {professionalAvailability[formData.selectedProfessional].isAvailable ? (
+                      <div className="availability-status available">
+                        <i className="fas fa-check-circle"></i>
+                        <span>✅ Professional is available on selected date</span>
+                      </div>
+                    ) : (
+                      <div className="availability-status unavailable">
+                        <i className="fas fa-exclamation-triangle"></i>
+                        <span>⚠️ Professional is not available on selected date</span>
+                        {professionalAvailability[formData.selectedProfessional].nextAvailable && (
+                          <p className="next-available">
+                            Next available: {new Date(professionalAvailability[formData.selectedProfessional].nextAvailable).toLocaleDateString()}
+                          </p>
+                        )}
+                        {professionalAvailability[formData.selectedProfessional].reason && (
+                          <p className="unavailability-reason">
+                            Reason: {professionalAvailability[formData.selectedProfessional].reason}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Alternative Professionals */}
+                {alternativeProfessionals.length > 0 && (
+                  <div className="alternative-professionals">
+                    <h5><i className="fas fa-users"></i> Alternative Professionals Available</h5>
+                    <div className="alternatives-list">
+                      {alternativeProfessionals.map((alt, index) => (
+                        <div key={index} className="alternative-option">
+                          <button 
+                            type="button"
+                            className="btn-alternative"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, selectedProfessional: alt.id }));
+                              setShowWaitlist(false);
+                              setAlternativeProfessionals([]);
+                            }}
+                          >
+                            <span className="alt-name">{alt.name}</span>
+                            <span className="alt-specialty">{alt.specialty}</span>
+                            <span className="alt-availability">Available {alt.availability}</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Waitlist Option */}
+                {showWaitlist && !professionalAvailability[formData.selectedProfessional]?.isAvailable && (
+                  <div className="waitlist-section">
+                    <div className="waitlist-info">
+                      <h5><i className="fas fa-clock"></i> Join Waitlist</h5>
+                      <p>Would you like to be notified when this professional becomes available?</p>
+                    </div>
+                    <div className="waitlist-actions">
+                      <button 
+                        type="button"
+                        className="btn-waitlist"
+                        onClick={() => {
+                          alert('You have been added to the waitlist! We will notify you when the professional becomes available.');
+                          setShowWaitlist(false);
+                        }}
+                      >
+                        <i className="fas fa-bell"></i>
+                        Join Waitlist
+                      </button>
+                      <button 
+                        type="button"
+                        className="btn-choose-different"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, selectedProfessional: '', appointmentDate: '' }));
+                          setShowWaitlist(false);
+                          setAlternativeProfessionals([]);
+                        }}
+                      >
+                        <i className="fas fa-calendar-alt"></i>
+                        Choose Different Date
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

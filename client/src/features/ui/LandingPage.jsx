@@ -94,8 +94,8 @@ const LandingPage = () => {
         onLogout={handleLogout}
       />
       <HeroSection onBookClick={handleBookingClick} />
-      <ServicesSection onBookClick={handleBookingClick} />
       <AboutSection />
+      <ServicesSection onBookClick={handleBookingClick} />
       <CTASection onBookClick={handleBookingClick} />
       <OtherBranchesSection />
       <ContactSection />

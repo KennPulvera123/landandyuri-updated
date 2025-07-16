@@ -259,16 +259,37 @@
 }
 
 .gcash-icon {
-    background: linear-gradient(135deg, #007DFF 0%, #0056CC 100%);
+    background: none;
+    border: none;
+    padding: 0;
 }
 
 .gcash-icon img {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.maya-icon {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.maya-icon img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
 }
 
 .bank-icon {
     background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+    color: var(--white);
+    font-size: 1.5rem;
+}
+
+.cash-icon {
+    background: linear-gradient(135deg, #28A745 0%, #155724 100%);
     color: var(--white);
     font-size: 1.5rem;
 }
@@ -861,6 +882,25 @@
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
+}
+
+/* Maya Account Info */
+.maya-account-info {
+    background: #e8f8e5;
+    border: 1px solid #00A651;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.maya-account-info h4 {
+    color: #00A651;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .gcash-account-info h4 {
@@ -2142,6 +2182,33 @@
     position: relative;
 }
 
+.maya-account-info-compact {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #00A651;
+    box-shadow: 0 4px 16px rgba(0, 166, 81, 0.1);
+    position: relative;
+}
+
+.maya-account-info-compact::before {
+    content: '📱';
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    background: #00A651;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 166, 81, 0.3);
+}
+
 .gcash-account-info-compact::before {
     content: '📱';
     position: absolute;
@@ -2264,11 +2331,37 @@
 }
 
 .payment-methods-compact .gcash-icon {
-    background: linear-gradient(135deg, #007DFF 0%, #0056CC 100%);
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.payment-methods-compact .gcash-icon img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+}
+
+.payment-methods-compact .maya-icon {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.payment-methods-compact .maya-icon img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
 }
 
 .payment-methods-compact .bank-icon {
     background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+    color: white;
+    font-size: 1.5rem;
+}
+
+.payment-methods-compact .cash-icon {
+    background: linear-gradient(135deg, #28A745 0%, #155724 100%);
     color: white;
     font-size: 1.5rem;
 }
@@ -2421,6 +2514,291 @@
     padding: 1.5rem;
     background: white;
     transition: all 0.3s ease;
+}
+
+/* Cash Payment Styles */
+.cash-payment-container-compact {
+    padding: 1.5rem 2rem;
+}
+
+.cash-payment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.cash-instructions {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #28a745;
+    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.1);
+}
+
+.cash-instructions h4 {
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.instruction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.instruction-item i {
+    color: #28a745;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.instruction-item strong {
+    color: #1a1a1a;
+    font-size: 0.95rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.instruction-item p {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.cash-payment-summary {
+    background: linear-gradient(135deg, #fff8f5 0%, #ffffff 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #FF6B35;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.1);
+}
+
+.cash-payment-summary h4 {
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row.total {
+    background: linear-gradient(135deg, #FF6B35 0%, #FFA726 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.summary-row.total .amount {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.summary-row span:first-child {
+    color: #666;
+    font-weight: 500;
+}
+
+.summary-row span:last-child {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Cash Confirmation Styles */
+.cash-confirmation-container {
+    padding: 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.booking-confirmation-details {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #FF6B35;
+    box-shadow: 0 4px 16px rgba(255, 107, 53, 0.1);
+}
+
+.booking-confirmation-details h4 {
+    color: #1a1a1a;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.confirmation-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.detail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-group label {
+    color: #666;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.detail-group span {
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.detail-group.payment-amount-group {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #FF6B35 0%, #FFA726 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.detail-group.payment-amount-group label {
+    color: white;
+    font-size: 1rem;
+}
+
+.detail-group.payment-amount-group .amount {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.cash-reminder {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #ffc107;
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.1);
+}
+
+.cash-reminder h4 {
+    color: #856404;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cash-reminder ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #856404;
+}
+
+.cash-reminder li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.btn-confirm {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+}
+
+/* Mobile responsiveness for cash payment */
+@media (max-width: 768px) {
+    .cash-payment-container-compact {
+        padding: 1rem;
+    }
+    
+    .cash-payment-details {
+        gap: 1.5rem;
+    }
+    
+    .instruction-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.75rem;
+    }
+    
+    .instruction-item i {
+        align-self: center;
+    }
+    
+    .cash-confirmation-container {
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+    
+    .confirmation-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .detail-group.payment-amount-group {
+        grid-column: 1 / -1;
+    }
 }
 
 .bank-transfer-container-compact .bank-option:hover {

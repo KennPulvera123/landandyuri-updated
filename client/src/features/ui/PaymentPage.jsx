@@ -107,14 +107,31 @@ const PaymentPage = () => {
 
   const handleConfirmationSubmit = (e) => {
     e.preventDefault();
-    // Save payment confirmation to localStorage
-    const paymentData = {
-      ...bookingData,
-      ...confirmationData,
-      paymentMethod: selectedMethod,
-      paymentStatus: 'pending-verification',
-      paymentAmount: 2000
-    };
+    
+    // Handle different payment methods
+    let paymentData;
+    
+    if (selectedMethod === 'cash') {
+      // For cash payments, set status to pending and don't require payment verification
+      paymentData = {
+        ...bookingData,
+        paymentMethod: selectedMethod,
+        paymentStatus: 'pending',
+        paymentAmount: 2000,
+        paymentDate: new Date().toISOString(),
+        paymentReference: 'Cash on Site',
+        accountName: bookingData.guardianName || 'Cash Payment'
+      };
+    } else {
+      // For online payments (GCash/Bank), require verification
+      paymentData = {
+        ...bookingData,
+        ...confirmationData,
+        paymentMethod: selectedMethod,
+        paymentStatus: 'pending-verification',
+        paymentAmount: 2000
+      };
+    }
     
     // Save to localStorage
     const existingBookings = JSON.parse(localStorage.getItem('assessmentBookings') || '[]');
@@ -126,8 +143,13 @@ const PaymentPage = () => {
     localStorage.removeItem(PAYMENT_FORM_STORAGE_KEY);
     localStorage.removeItem(PAYMENT_METHOD_STORAGE_KEY);
     
-    // Redirect to success page or show success message
-    alert('Payment confirmation submitted! We will verify your payment and contact you soon.');
+    // Show appropriate success message based on payment method
+    if (selectedMethod === 'cash') {
+      alert('Appointment reserved! We will call you to confirm your appointment details. Please bring ₱2,000 cash when you arrive.');
+    } else {
+      alert('Payment confirmation submitted! We will verify your payment and contact you soon.');
+    }
+    
     window.location.href = '/';
   };
 
@@ -218,7 +240,7 @@ const PaymentPage = () => {
                     >
                       <div className="payment-header-option">
                         <div className="payment-icon gcash-icon">
-                          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzAwN0RGRiIvPgo8cGF0aCBkPSJNMTIgMTJIMjhWMTZIMTJWMTJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMThIMjRWMjJIMTJWMThaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgMjRIMjhWMjhIMTJWMjRaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="GCash" />
+                          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIFNvbGlkIGJyaWdodCBibHVlIGJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzAwOENGRiIvPgogIDwhLS0gR0Nhc2ggdGV4dCAtLT4KICA8dGV4dCB4PSIyMCIgeT0iMjYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMCIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdDYXNoPC90ZXh0Pgo8L3N2Zz4K" alt="GCash" />
                         </div>
                         <div className="payment-info">
                           <h4>GCash</h4>
@@ -269,6 +291,68 @@ const PaymentPage = () => {
                             onChange={() => {}}
                           />
                           <label htmlFor="bank"></label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Maya Option */}
+                    <div 
+                      className={`payment-option ${selectedMethod === 'maya' ? 'selected' : ''}`} 
+                      onClick={() => handleMethodSelection('maya')}
+                    >
+                      <div className="payment-header-option">
+                        <div className="payment-icon maya-icon">
+                          <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIERhcmsgYmFja2dyb3VuZCAtLT4KICA8cmVjdCB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjMkEyQTJBIi8+CiAgPCEtLSBtYXlhIHRleHQgLS0+CiAgPHRleHQgeD0iMjAiIHk9IjI2IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTAiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMwMEQ3M0IiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMC41cHgiPm1heWE8L3RleHQ+Cjwvc3ZnPgo=" alt="Maya" />
+                        </div>
+                        <div className="payment-info">
+                          <h4>Maya</h4>
+                          <p>Pay using Maya digital wallet</p>
+                          <div className="payment-features">
+                            <span className="feature">✓ QR code payment</span>
+                            <span className="feature">✓ Instant transfer</span>
+                          </div>
+                        </div>
+                        <div className="payment-radio">
+                          <input 
+                            type="radio" 
+                            name="payment-method" 
+                            value="maya" 
+                            id="maya"
+                            checked={selectedMethod === 'maya'}
+                            onChange={() => {}}
+                          />
+                          <label htmlFor="maya"></label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cash on Site Option */}
+                    <div 
+                      className={`payment-option ${selectedMethod === 'cash' ? 'selected' : ''}`} 
+                      onClick={() => handleMethodSelection('cash')}
+                    >
+                      <div className="payment-header-option">
+                        <div className="payment-icon cash-icon">
+                          <i className="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div className="payment-info">
+                          <h4>Pay Cash on Site</h4>
+                          <p>Pay cash when you arrive for your appointment</p>
+                          <div className="payment-features">
+                            <span className="feature">✓ No online payment needed</span>
+                            <span className="feature">✓ Pay upon arrival</span>
+                          </div>
+                        </div>
+                        <div className="payment-radio">
+                          <input 
+                            type="radio" 
+                            name="payment-method" 
+                            value="cash" 
+                            id="cash"
+                            checked={selectedMethod === 'cash'}
+                            onChange={() => {}}
+                          />
+                          <label htmlFor="cash"></label>
                         </div>
                       </div>
                     </div>
@@ -330,12 +414,21 @@ const PaymentPage = () => {
                                 <i className="fas fa-qrcode"></i> {showQR ? 'Hide' : 'Show'} QR Code
                               </button>
                               {showQR && (
-                                <div className="qr-code-section-compact" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1rem' }}>
-                                  <div className="qr-code-wrapper">
-                                    <img id="gcash-qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="GCash QR Code" />
-                                  </div>
-                                  <div className="payment-amount-compact">
-                                    <span className="amount">₱2,000.00</span>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1rem' }}>
+                                  <img 
+                                    id="gcash-qr-img" 
+                                    src="./images/gcash-payment.jpg"
+                                    alt="GCash Payment QR Code - ₱2,000.00" 
+                                    style={{ 
+                                      maxWidth: '400px', 
+                                      width: '100%', 
+                                      height: 'auto'
+                                    }}
+                                  />
+                                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                                    <p style={{ color: '#666', fontSize: '14px' }}>
+                                      <i className="fas fa-mobile-alt"></i> Scan QR code with your GCash app to pay ₱2,000.00
+                                    </p>
                                   </div>
                                 </div>
                               )}
@@ -347,11 +440,11 @@ const PaymentPage = () => {
                               <h4><i className="fas fa-mobile-alt"></i> GCash Details</h4>
                               <div className="account-detail">
                                 <span className="label">Name:</span>
-                                <span className="value">Lance and Yuri Kids Spot Naga City</span>
+                                <span className="value">Ernie Singson</span>
                               </div>
                               <div className="account-detail">
                                 <span className="label">Number:</span>
-                                <span className="value">09123456789</span>
+                                <span className="value">09299512205</span>
                               </div>
                             </div>
                           </li>
@@ -368,6 +461,188 @@ const PaymentPage = () => {
                     >
                       <i className="fas fa-arrow-left"></i>
                       Back
+                    </button>
+                    <button 
+                      className="btn-next" 
+                      onClick={proceedToStep3}
+                      disabled={isExpired}
+                    >
+                      {isExpired ? 'Session Expired' : 'Payment Completed'}
+                      {!isExpired && <i className="fas fa-arrow-right"></i>}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Payment Details - Cash on Site */}
+              {currentStep === 2 && selectedMethod === 'cash' && (
+                <div className="payment-step" id="step-2-cash" data-step="2">
+                  <div className="step-header-compact">
+                    <h3><i className="fas fa-money-bill-wave"></i> Step 2: Cash Payment Confirmation</h3>
+                    <div className="motivational-message">
+                      <i className="fas fa-info-circle"></i>
+                      <span>
+                        <strong>No payment needed now!</strong> You can pay cash when you arrive for your appointment.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="cash-payment-container-compact">
+                    <div className="cash-payment-details">
+                      <div className="cash-instructions">
+                        <h4><i className="fas fa-clipboard-list"></i> What to expect:</h4>
+                        <div className="instruction-list">
+                          <div className="instruction-item">
+                            <i className="fas fa-calendar-check"></i>
+                            <div>
+                              <strong>Appointment Confirmation</strong>
+                              <p>Your appointment is reserved and will be confirmed shortly</p>
+                            </div>
+                          </div>
+                          <div className="instruction-item">
+                            <i className="fas fa-money-bill-wave"></i>
+                            <div>
+                              <strong>Payment on Arrival</strong>
+                              <p>Pay ₱2,000 cash when you arrive for your appointment</p>
+                            </div>
+                          </div>
+                          <div className="instruction-item">
+                            <i className="fas fa-phone"></i>
+                            <div>
+                              <strong>Confirmation Call</strong>
+                              <p>We'll call you to confirm your appointment details</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="cash-payment-summary">
+                        <h4><i className="fas fa-receipt"></i> Appointment Summary</h4>
+                        <div className="summary-details">
+                          <div className="summary-row">
+                            <span>Service:</span>
+                            <span>Initial Assessment</span>
+                          </div>
+                          <div className="summary-row">
+                            <span>Date:</span>
+                            <span>{bookingData?.appointmentDate}</span>
+                          </div>
+                          <div className="summary-row">
+                            <span>Payment Method:</span>
+                            <span>Cash on Site</span>
+                          </div>
+                          <div className="summary-row total">
+                            <span>Amount to Pay:</span>
+                            <span className="amount">₱2,000</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="step-actions">
+                    <button 
+                      className="btn-back" 
+                      onClick={() => setCurrentStep(1)}
+                    >
+                      <i className="fas fa-arrow-left"></i>
+                      Back to Methods
+                    </button>
+                    <button 
+                      className="btn-next" 
+                      onClick={proceedToStep3}
+                    >
+                      Confirm Appointment
+                      <i className="fas fa-arrow-right"></i>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Payment Details - Maya */}
+              {currentStep === 2 && selectedMethod === 'maya' && (
+                <div className="payment-step" id="step-2-maya" data-step="2">
+                  <div className="step-header-compact">
+                    <h3><i className="fas fa-mobile-alt"></i> Step 2: Scan QR Code</h3>
+                    <div className={`payment-warning-inline countdown-${getCountdownStatus()}`}>
+                      <i className="fas fa-clock"></i>
+                      <span>
+                        {isExpired ? (
+                          <span className="expired-text">⚠️ Session Expired - Please start over</span>
+                        ) : (
+                          <>
+                            <span className="countdown-text">Time remaining: </span>
+                            <span className="countdown-timer">{formatTime(timeLeft)}</span>
+                            <span className="countdown-note"> • No refunds</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="qr-payment-container-compact">
+                    <div className="payment-details-compact">
+                      <div className="payment-steps-compact">
+                        <h4>How to Pay:</h4>
+                        <ol>
+                          <li style={{ marginBottom: '2rem' }}>
+                            <span style={{ fontWeight: 'bold', minWidth: '160px' }}>Option 1: Scan QR Code</span>
+                            <div style={{ marginLeft: '2.5rem', marginTop: '1rem' }}>
+                              <button 
+                                id="show-maya-qr-btn" 
+                                className="btn-show-qr" 
+                                type="button" 
+                                onClick={() => setShowQR(!showQR)}
+                              >
+                                <i className="fas fa-qrcode"></i> {showQR ? 'Hide' : 'Show'} QR Code
+                              </button>
+                              {showQR && (
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1rem' }}>
+                                  <img 
+                                    id="maya-qr-img" 
+                                    src="./images/maya-payment.jpg"
+                                    alt="Maya Payment QR Code - ₱2,000.00" 
+                                    style={{ 
+                                      maxWidth: '400px', 
+                                      width: '100%', 
+                                      height: 'auto'
+                                    }}
+                                  />
+                                  <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                                    <p style={{ color: '#666', fontSize: '14px' }}>
+                                      <i className="fas fa-mobile-alt"></i> Scan QR code with your Maya app to pay ₱2,000.00
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                          <li>
+                            <span style={{ fontWeight: 'bold' }}>Option 2: Send to Maya Account</span>
+                            <div className="maya-account-info-compact" style={{ marginTop: '1rem' }}>
+                              <h4><i className="fas fa-mobile-alt"></i> Maya Details</h4>
+                              <div className="account-detail">
+                                <span className="label">Name:</span>
+                                <span className="value">Ernie Singson</span>
+                              </div>
+                              <div className="account-detail">
+                                <span className="label">Number:</span>
+                                <span className="value">09299512205</span>
+                              </div>
+                            </div>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="step-actions">
+                    <button 
+                      className="btn-back" 
+                      onClick={() => setCurrentStep(1)}
+                    >
+                      <i className="fas fa-arrow-left"></i>
+                      Back to Methods
                     </button>
                     <button 
                       className="btn-next" 
@@ -481,13 +756,102 @@ const PaymentPage = () => {
               {/* Step 3: Payment Confirmation */}
               {currentStep === 3 && (
                 <div className="payment-step" id="step-3" data-step="3">
-                  <div className="step-header">
-                    <h3><i className="fas fa-check-circle"></i> Step 3: Confirm Your Payment</h3>
-                    <p>Please provide your payment details for verification</p>
-                  </div>
+                  {selectedMethod === 'cash' ? (
+                    // Cash Payment Confirmation
+                    <>
+                      <div className="step-header-compact">
+                        <h3><i className="fas fa-check-circle"></i> Step 3: Final Confirmation</h3>
+                        <div className="motivational-message">
+                          <i className="fas fa-heart"></i>
+                          <span>
+                            <strong>Almost done!</strong> Your appointment is ready to be confirmed.
+                          </span>
+                        </div>
+                      </div>
 
-                  <div className="confirmation-form">
-                    <form id="payment-confirmation-form" onSubmit={handleConfirmationSubmit}>
+                      <div className="cash-confirmation-container">
+                        <div className="booking-confirmation-details">
+                          <h4><i className="fas fa-calendar-alt"></i> Booking Details</h4>
+                          <div className="confirmation-grid">
+                            <div className="detail-group">
+                              <label>Guardian Name:</label>
+                              <span>{bookingData?.guardianName}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Child Name:</label>
+                              <span>{bookingData?.childName}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Email:</label>
+                              <span>{bookingData?.guardianEmail}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Phone:</label>
+                              <span>{bookingData?.guardianPhone}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Branch:</label>
+                              <span>{bookingData?.branchLocation === 'blumentritt' ? 'Main Branch - Blumentritt' : 'Satellite Branch - Del Rosario'}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Date & Time:</label>
+                              <span>{bookingData?.appointmentDate} at {bookingData?.selectedTime}</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Service:</label>
+                              <span>Initial Assessment</span>
+                            </div>
+                            <div className="detail-group">
+                              <label>Payment Method:</label>
+                              <span>Cash on Site</span>
+                            </div>
+                            <div className="detail-group payment-amount-group">
+                              <label>Amount to Pay:</label>
+                              <span className="amount">₱2,000</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="cash-reminder">
+                          <h4><i className="fas fa-exclamation-triangle"></i> Important Reminders</h4>
+                          <ul>
+                            <li>Bring exactly ₱2,000 in cash on your appointment day</li>
+                            <li>Arrive 10-15 minutes early for registration</li>
+                            <li>We will call you to confirm your appointment details</li>
+                            <li>Please bring your child's birth certificate or ID</li>
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="step-actions">
+                        <button 
+                          type="button"
+                          className="btn-back" 
+                          onClick={() => setCurrentStep(2)}
+                        >
+                          <i className="fas fa-arrow-left"></i>
+                          Back to Details
+                        </button>
+                        <button 
+                          type="button"
+                          className="btn-submit btn-confirm" 
+                          onClick={handleConfirmationSubmit}
+                        >
+                          <i className="fas fa-check"></i>
+                          Confirm Appointment
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    // Online Payment Confirmation (GCash/Bank)
+                    <>
+                      <div className="step-header">
+                        <h3><i className="fas fa-check-circle"></i> Step 3: Confirm Your Payment</h3>
+                        <p>Please provide your payment details for verification</p>
+                      </div>
+
+                      <div className="confirmation-form">
+                        <form id="payment-confirmation-form" onSubmit={handleConfirmationSubmit}>
                       <div className="form-row">
                         <div className="form-group">
                           <label htmlFor="payment-date">Date of Payment</label>
@@ -539,7 +903,7 @@ const PaymentPage = () => {
                         <h4>Payment Summary</h4>
                         <div className="summary-item">
                           <span>Payment Method:</span>
-                          <span>{selectedMethod === 'gcash' ? 'GCash' : 'Bank Transfer'}</span>
+                          <span>{selectedMethod === 'gcash' ? 'GCash' : selectedMethod === 'maya' ? 'Maya' : 'Bank Transfer'}</span>
                         </div>
                         <div className="summary-item">
                           <span>Reservation Fee:</span>
@@ -563,6 +927,8 @@ const PaymentPage = () => {
                       </div>
                     </form>
                   </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>

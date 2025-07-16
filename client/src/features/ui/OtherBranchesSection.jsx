@@ -5,8 +5,8 @@ const OtherBranchesSection = () => {
     {
       id: 1,
       name: "Legazpi Branch",
-      address: "Door 5 shorehomes Rawis legazpi city, Legazpi, Philippines, 4500",
-      phone: "0920 914 0071",
+      address: "Door 5 Shorehomes Apartment Rawis Legazpi City infront of ltfrb beside kafe rustico",
+      phone: "09774630156",
       icon: "fa-map-marker-alt"
     },
     {
@@ -19,14 +19,15 @@ const OtherBranchesSection = () => {
     {
       id: 3,
       name: "Guinobatan Branch",
-      address: "Paternò St. Calzada Guinobatan, Guinobatan, Philippines, 4503",
-      phone: "0977 463 0156",
+      address: "Door B Paterno St calzada Guinobatan Albay. Near Usurman trading Beside Guinobatan west central school",
+      phone: "09456970557",
       icon: "fa-map-marker-alt"
     },
     {
       id: 4,
       name: "Polangui Branch",
-      address: "Door 4 2nd floor alpapara bldg. Purok mars centro occidental polangui albay",
+      address: "Centro Occidental Polangui Albay. Alpapara and Liria Building second floor Door D",
+      phone: "0949 136 2045",
       icon: "fa-map-marker-alt"
     },
     {
@@ -38,25 +39,22 @@ const OtherBranchesSection = () => {
     {
       id: 6,
       name: "Tabaco Branch",
-      address: "Tabaco City, Albay",
+      address: "Zone 3 Panal tabaco City Harap ng goyena old compound",
+      phone: "09668474667",
       icon: "fa-map-marker-alt"
     },
     {
       id: 7,
       name: "Sorsogon Branch",
-      address: "Sorsogon City",
+      address: "346 West District Tugos Sorsogon City. Infront of Sun Tiger or Bigmac Burger",
+      phone: "0992-259-3967",
       icon: "fa-map-marker-alt"
     },
     {
       id: 8,
-      name: "Ligao Branch",
-      address: "Ligao City Albay",
-      icon: "fa-map-marker-alt"
-    },
-    {
-      id: 9,
       name: "Iriga Branch",
-      address: "Iriga city",
+      address: "DOOR 2 APEM -DG Apartment zone 4 San isidro iriga city 4431 beside PCA sa unahan ng Casureco",
+      phone: "09770279122",
       icon: "fa-map-marker-alt"
     }
   ];

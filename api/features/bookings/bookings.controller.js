@@ -237,3 +237,102 @@ exports.getAvailableTimeSlots = async (req, res) => {
     });
   }
 }; 
+
+// Reschedule booking
+exports.rescheduleBooking = async (req, res) => {
+  try {
+    const { appointmentDate, selectedTime, adminNotes, reason } = req.body;
+    const bookingId = req.params.id;
+
+    // Validate required fields
+    if (!appointmentDate || !selectedTime) {
+      return res.status(400).json({
+        success: false,
+        message: 'New appointment date and time are required'
+      });
+    }
+
+    // Check if the new date is not in the past
+    const newDate = new Date(appointmentDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (newDate < today) {
+      return res.status(400).json({
+        success: false,
+        message: 'New appointment date cannot be in the past'
+      });
+    }
+
+    // Find the existing booking
+    const existingBooking = await Booking.findById(bookingId);
+    if (!existingBooking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if the new time slot is available for the same branch
+    const conflictingBookings = await Booking.find({
+      appointmentDate: {
+        $gte: new Date(appointmentDate),
+        $lt: new Date(new Date(appointmentDate).getTime() + 24 * 60 * 60 * 1000)
+      },
+      branchLocation: existingBooking.branchLocation,
+      selectedTime: selectedTime,
+      status: { $ne: 'cancelled' },
+      _id: { $ne: bookingId } // Exclude current booking
+    });
+
+    if (conflictingBookings.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: 'The selected time slot is already booked for this branch'
+      });
+    }
+
+    // Store original appointment details for tracking
+    const originalDate = existingBooking.appointmentDate;
+    const originalTime = existingBooking.selectedTime;
+
+    // Update the booking with new schedule
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      {
+        appointmentDate: new Date(appointmentDate),
+        selectedTime: selectedTime,
+        adminNotes: adminNotes || existingBooking.adminNotes,
+        status: 'scheduled', // Mark as scheduled after rescheduling
+        rescheduledFrom: {
+          originalDate: originalDate,
+          originalTime: originalTime,
+          rescheduledAt: new Date(),
+          reason: reason || 'Admin rescheduled'
+        },
+        updatedAt: Date.now()
+      },
+      { new: true, runValidators: true }
+    );
+
+    res.json({
+      success: true,
+      message: 'Booking rescheduled successfully',
+      data: updatedBooking,
+      originalSchedule: {
+        date: originalDate,
+        time: originalTime
+      },
+      newSchedule: {
+        date: appointmentDate,
+        time: selectedTime
+      }
+    });
+  } catch (error) {
+    console.error('Reschedule booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+}; 

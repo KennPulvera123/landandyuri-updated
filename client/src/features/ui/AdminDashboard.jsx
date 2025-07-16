@@ -16,6 +16,22 @@ const AdminDashboard = () => {
   // Booking details modal state
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  
+  // Payment details modal state
+  const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+
+  // Reschedule modal state
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [selectedBookingForReschedule, setSelectedBookingForReschedule] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState({
+    appointmentDate: '',
+    selectedTime: '',
+    reason: '',
+    adminNotes: ''
+  });
+  const [availableTimeSlotsForReschedule, setAvailableTimeSlotsForReschedule] = useState([]);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
 
   // Authentication modal state
   const [authEmail, setAuthEmail] = useState('test@gmail.com');
@@ -83,9 +99,107 @@ const AdminDashboard = () => {
     setIsBookingDetailsOpen(true);
   };
 
+  const viewPaymentDetails = (payment) => {
+    setSelectedPayment(payment);
+    setIsPaymentDetailsOpen(true);
+  };
+
   const closeBookingDetails = () => {
     setIsBookingDetailsOpen(false);
     setSelectedBooking(null);
+  };
+
+  const closePaymentDetails = () => {
+    setIsPaymentDetailsOpen(false);
+    setSelectedPayment(null);
+  };
+
+  const deleteAssessment = (bookingIndex) => {
+    if (window.confirm('Are you sure you want to delete this assessment? The payment information will be kept.')) {
+      const updatedBookings = [...patients.assessments];
+      const booking = updatedBookings[bookingIndex];
+      
+      // Mark assessment as deleted but keep payment info
+      updatedBookings[bookingIndex] = {
+        ...booking,
+        assessmentDeleted: true,
+        deletedAt: new Date().toISOString(),
+        deletedType: 'assessment'
+      };
+      
+      // Update localStorage
+      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+      
+      // Update state
+      setPatients(prev => ({
+        ...prev,
+        assessments: updatedBookings
+      }));
+      
+      // Close modal if open
+      if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+        closeBookingDetails();
+      }
+    }
+  };
+
+  const deletePayment = (bookingIndex) => {
+    if (window.confirm('Are you sure you want to delete this payment information? The assessment will be kept.')) {
+      const updatedBookings = [...patients.assessments];
+      const booking = updatedBookings[bookingIndex];
+      
+      // Remove payment-specific fields but keep assessment
+      updatedBookings[bookingIndex] = {
+        ...booking,
+        paymentMethod: null,
+        paymentAmount: null,
+        paymentReference: null,
+        accountName: null,
+        paymentDate: null,
+        paymentStatus: null,
+        verifiedAt: null,
+        paymentDeleted: true,
+        paymentDeletedAt: new Date().toISOString()
+      };
+      
+      // Update localStorage
+      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+      
+      // Update state
+      setPatients(prev => ({
+        ...prev,
+        assessments: updatedBookings
+      }));
+      
+      // Close modal if open
+      if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
+        closePaymentDetails();
+      }
+    }
+  };
+
+  const deleteEntireBooking = (bookingIndex) => {
+    if (window.confirm('Are you sure you want to delete this entire booking? This will remove both assessment and payment information permanently.')) {
+      const updatedBookings = [...patients.assessments];
+      updatedBookings.splice(bookingIndex, 1);
+      
+      // Update localStorage
+      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+      
+      // Update state
+      setPatients(prev => ({
+        ...prev,
+        assessments: updatedBookings
+      }));
+      
+      // Close modals if open
+      if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+        closeBookingDetails();
+      }
+      if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
+        closePaymentDetails();
+      }
+    }
   };
 
   const markBookingDone = (bookingIndex) => {
@@ -131,6 +245,124 @@ const AdminDashboard = () => {
     // Close modal if it's the current booking
     if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
       closeBookingDetails();
+    }
+  };
+
+  // Reschedule functions
+  const openRescheduleModal = (booking) => {
+    setSelectedBookingForReschedule(booking);
+    setRescheduleData({
+      appointmentDate: '',
+      selectedTime: '',
+      reason: '',
+      adminNotes: booking.adminNotes || ''
+    });
+    setIsRescheduleModalOpen(true);
+  };
+
+  const closeRescheduleModal = () => {
+    setIsRescheduleModalOpen(false);
+    setSelectedBookingForReschedule(null);
+    setRescheduleData({
+      appointmentDate: '',
+      selectedTime: '',
+      reason: '',
+      adminNotes: ''
+    });
+    setAvailableTimeSlotsForReschedule([]);
+  };
+
+  const loadTimeSlotsForReschedule = async (date) => {
+    if (!date || !selectedBookingForReschedule) return;
+    
+    try {
+      // Get all bookings for the selected date and branch (excluding current booking)
+      const existingBookings = patients.assessments.filter(booking => {
+        const bookingDate = new Date(booking.appointmentDate).toDateString();
+        const selectedDate = new Date(date).toDateString();
+        return bookingDate === selectedDate && 
+               booking.branchLocation === selectedBookingForReschedule.branchLocation &&
+               booking !== selectedBookingForReschedule &&
+               booking.status !== 'cancelled';
+      });
+
+      // Define all available time slots
+      const allTimeSlots = [
+        '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+        '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'
+      ];
+
+      // Get booked time slots
+      const bookedSlots = existingBookings.map(booking => booking.selectedTime);
+
+      // Return available slots
+      const availableSlots = allTimeSlots.filter(slot => !bookedSlots.includes(slot));
+      setAvailableTimeSlotsForReschedule(availableSlots);
+    } catch (error) {
+      console.error('Error loading time slots:', error);
+      setAvailableTimeSlotsForReschedule([]);
+    }
+  };
+
+  const handleRescheduleSubmit = async () => {
+    if (!rescheduleData.appointmentDate || !rescheduleData.selectedTime) {
+      alert('Please select both a new date and time.');
+      return;
+    }
+
+    setRescheduleLoading(true);
+    
+    try {
+      // Find the booking index
+      const bookingIndex = patients.assessments.findIndex(b => b === selectedBookingForReschedule);
+      
+      if (bookingIndex === -1) {
+        throw new Error('Booking not found');
+      }
+
+      // Update the booking in localStorage
+      const updatedBookings = [...patients.assessments];
+      const originalDate = updatedBookings[bookingIndex].appointmentDate;
+      const originalTime = updatedBookings[bookingIndex].selectedTime;
+      
+      updatedBookings[bookingIndex] = {
+        ...updatedBookings[bookingIndex],
+        appointmentDate: rescheduleData.appointmentDate,
+        selectedTime: rescheduleData.selectedTime,
+        adminNotes: rescheduleData.adminNotes,
+        status: 'scheduled',
+        rescheduledFrom: {
+          originalDate: originalDate,
+          originalTime: originalTime,
+          rescheduledAt: new Date().toISOString(),
+          reason: rescheduleData.reason || 'Admin rescheduled'
+        },
+        updatedAt: new Date().toISOString()
+      };
+
+      // Update localStorage
+      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+
+      // Update state
+      setPatients(prev => ({
+        ...prev,
+        assessments: updatedBookings
+      }));
+
+      alert(`Booking successfully rescheduled from ${new Date(originalDate).toLocaleDateString()} at ${originalTime} to ${new Date(rescheduleData.appointmentDate).toLocaleDateString()} at ${rescheduleData.selectedTime}`);
+      
+      closeRescheduleModal();
+      
+      // Close booking details modal if open
+      if (selectedBooking === selectedBookingForReschedule) {
+        closeBookingDetails();
+      }
+
+    } catch (error) {
+      console.error('Error rescheduling booking:', error);
+      alert('Error rescheduling booking. Please try again.');
+    } finally {
+      setRescheduleLoading(false);
     }
   };
 
@@ -270,7 +502,7 @@ const AdminDashboard = () => {
             >
               🩺 Assessment Bookings
               <span className="action-count" id="assessmentCount">
-                {patients.assessments.length}
+                {patients.assessments.filter(p => !p.assessmentDeleted).length}
               </span>
             </button>
             <button 
@@ -280,7 +512,7 @@ const AdminDashboard = () => {
             >
               💳 Payment Information
               <span className="action-count" id="paymentCount">
-                {patients.assessments.length}
+                {patients.assessments.filter(p => (p.paymentReference || p.accountName) && !p.paymentDeleted).length}
               </span>
             </button>
           </div>
@@ -310,7 +542,7 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {patients.assessments
-                      .filter(patient => patient.branchLocation === selectedBranch)
+                      .filter(patient => patient.branchLocation === selectedBranch && !patient.assessmentDeleted)
                       .map((patient, index) => {
                         const originalIndex = patients.assessments.findIndex(p => p === patient);
                         const isCompleted = patient.status === 'completed';
@@ -327,13 +559,19 @@ const AdminDashboard = () => {
                             <td>
                               <div className="contact-info">
                                 {patient.guardianPhone}<br />
-                                {patient.guardianEmail}
+                                {patient.guardianEmail}<br />
+                                <small>{patient.guardianAddress}</small>
                               </div>
                             </td>
                             <td>
                               <div className="appointment-info">
                                 Date: {patient.appointmentDate}<br />
                                 Time: {patient.selectedTime}
+                                {patient.rescheduledFrom && (
+                                  <div className="rescheduled-badge">
+                                    🔄 Rescheduled from {new Date(patient.rescheduledFrom.originalDate).toLocaleDateString()}
+                                  </div>
+                                )}
                                 {isCompleted && <div className="completed-date">Completed: {new Date(patient.completedAt).toLocaleDateString()}</div>}
                               </div>
                             </td>
@@ -347,14 +585,30 @@ const AdminDashboard = () => {
                                   <i className="fas fa-eye"></i>
                                 </button>
                                 {!isCompleted && (
-                                  <button 
-                                    className="btn-action done" 
-                                    onClick={() => markBookingDone(originalIndex)}
-                                    title="Mark as done"
-                                  >
-                                    <i className="fas fa-check"></i>
-                                  </button>
+                                  <>
+                                    <button 
+                                      className="btn-action reschedule" 
+                                      onClick={() => openRescheduleModal(patient)}
+                                      title="Reschedule appointment"
+                                    >
+                                      <i className="fas fa-calendar-alt"></i>
+                                    </button>
+                                    <button 
+                                      className="btn-action done" 
+                                      onClick={() => markBookingDone(originalIndex)}
+                                      title="Mark as done"
+                                    >
+                                      <i className="fas fa-check"></i>
+                                    </button>
+                                  </>
                                 )}
+                                <button 
+                                  className="btn-action delete-booking" 
+                                  onClick={() => deleteAssessment(originalIndex)}
+                                  title="Delete assessment"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -363,7 +617,7 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
                 
-                {patients.assessments.filter(p => p.branchLocation === selectedBranch).length === 0 && (
+                {patients.assessments.filter(p => p.branchLocation === selectedBranch && !p.assessmentDeleted).length === 0 && (
                   <div className="empty-state">
                     <p>No assessment bookings for this branch yet.</p>
                   </div>
@@ -398,7 +652,7 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {patients.assessments
-                      .filter(patient => patient.branchLocation === selectedBranch)
+                      .filter(patient => patient.branchLocation === selectedBranch && (patient.paymentReference || patient.accountName) && !patient.paymentDeleted)
                       .map((patient, index) => {
                         const originalIndex = patients.assessments.findIndex(p => p === patient);
                         const isVerified = patient.paymentStatus === 'verified';
@@ -456,20 +710,27 @@ const AdminDashboard = () => {
                               <div className="action-buttons">
                                 <button 
                                   className="btn-action view-details" 
-                                  onClick={() => viewBookingDetails(patient)}
-                                  title="View full details"
+                                  onClick={() => viewPaymentDetails(patient)}
+                                  title="View payment details"
                                 >
                                   <i className="fas fa-eye"></i>
                                 </button>
                                 {hasPaymentInfo && !isVerified && (
                                   <button 
-                                    className="btn-action verify-payment" 
+                                    className="btn-verify-payment-small" 
                                     onClick={() => verifyPayment(originalIndex)}
                                     title="Verify payment"
                                   >
                                     <i className="fas fa-check-circle"></i>
                                   </button>
                                 )}
+                                <button 
+                                  className="btn-action delete-booking" 
+                                  onClick={() => deletePayment(originalIndex)}
+                                  title="Delete payment"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -478,7 +739,7 @@ const AdminDashboard = () => {
                   </tbody>
                 </table>
                 
-                {patients.assessments.filter(p => p.branchLocation === selectedBranch).length === 0 && (
+                {patients.assessments.filter(p => p.branchLocation === selectedBranch && (p.paymentReference || p.accountName) && !p.paymentDeleted).length === 0 && (
                   <div className="empty-state">
                     <p>No payment information available for this branch.</p>
                   </div>
@@ -522,6 +783,9 @@ const AdminDashboard = () => {
                   </div>
                   <div className="detail-item">
                     <strong>Email:</strong> {selectedBooking.guardianEmail}
+                  </div>
+                  <div className="detail-item">
+                    <strong>Address:</strong> {selectedBooking.guardianAddress}
                   </div>
                 </div>
 
@@ -612,29 +876,249 @@ const AdminDashboard = () => {
                       <strong>Completed:</strong> {new Date(selectedBooking.completedAt).toLocaleString()}
                     </div>
                   )}
+                  {selectedBooking.rescheduledFrom && (
+                    <div className="detail-section reschedule-history">
+                      <h4>🔄 Reschedule History</h4>
+                      <div className="detail-item">
+                        <strong>Originally Scheduled:</strong> {new Date(selectedBooking.rescheduledFrom.originalDate).toLocaleDateString()} at {selectedBooking.rescheduledFrom.originalTime}
+                      </div>
+                      <div className="detail-item">
+                        <strong>Rescheduled On:</strong> {new Date(selectedBooking.rescheduledFrom.rescheduledAt).toLocaleString()}
+                      </div>
+                      {selectedBooking.rescheduledFrom.reason && (
+                        <div className="detail-item">
+                          <strong>Reason:</strong> {selectedBooking.rescheduledFrom.reason}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="booking-details-actions">
-                {selectedBooking.paymentStatus !== 'verified' && (selectedBooking.paymentReference || selectedBooking.accountName) && (
-                  <button 
-                    className="btn-verify-payment" 
-                    onClick={() => verifyPayment(patients.assessments.findIndex(b => b === selectedBooking))}
-                  >
-                    <i className="fas fa-check-circle"></i> Verify Payment
-                  </button>
-                )}
                 {selectedBooking.status !== 'completed' && (
-                  <button 
-                    className="btn-mark-done" 
-                    onClick={() => markBookingDone(patients.assessments.findIndex(b => b === selectedBooking))}
-                  >
-                    <i className="fas fa-check"></i> Mark as Done
-                  </button>
+                  <>
+                    <button 
+                      className="btn-reschedule-modal" 
+                      onClick={() => openRescheduleModal(selectedBooking)}
+                    >
+                      <i className="fas fa-calendar-alt"></i> Reschedule
+                    </button>
+                    <button 
+                      className="btn-mark-done" 
+                      onClick={() => markBookingDone(patients.assessments.findIndex(b => b === selectedBooking))}
+                    >
+                      <i className="fas fa-check"></i> Mark as Done
+                    </button>
+                  </>
                 )}
+                <button 
+                  className="btn-delete-booking-modal" 
+                  onClick={() => deleteAssessment(patients.assessments.findIndex(b => b === selectedBooking))}
+                >
+                  <i className="fas fa-trash"></i> Delete Assessment
+                </button>
                 <button className="btn-close-details" onClick={closeBookingDetails}>
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Details Modal */}
+      {isPaymentDetailsOpen && selectedPayment && (
+        <div className="booking-details-modal" style={{ display: 'block' }}>
+          <div className="booking-details-content">
+            <div className="booking-details-header">
+              <h2>💳 Payment Details</h2>
+              <span className="close-booking-details" onClick={closePaymentDetails}>&times;</span>
+            </div>
+            
+            <div className="booking-details-body">
+              <div className="booking-details-grid">
+                {/* Patient Information */}
+                <div className="detail-section">
+                  <h3>👤 Patient Information</h3>
+                  <div className="detail-item">
+                    <strong>Guardian:</strong> {selectedPayment.guardianName}
+                  </div>
+                  <div className="detail-item">
+                    <strong>Child:</strong> {selectedPayment.childName}
+                  </div>
+                  <div className="detail-item">
+                    <strong>Phone:</strong> {selectedPayment.guardianPhone}
+                  </div>
+                </div>
+
+                {/* Payment Information */}
+                <div className="detail-section">
+                  <h3>💳 Payment Information</h3>
+                  <div className="payment-method-display">
+                    {selectedPayment.paymentMethod === 'gcash' ? (
+                      <span className="method-badge gcash large">💳 GCash</span>
+                    ) : selectedPayment.paymentMethod === 'bank-transfer' ? (
+                      <span className="method-badge bank large">🏦 Bank Transfer</span>
+                    ) : (
+                      <span className="method-badge unknown large">❓ {selectedPayment.paymentMethod || 'Not specified'}</span>
+                    )}
+                  </div>
+                  
+                  <div className="detail-item">
+                    <strong>Amount:</strong> <span className="amount-display">₱{selectedPayment.paymentAmount ? selectedPayment.paymentAmount.toLocaleString() : '2,000.00'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Reference Number:</strong> <span className="reference-display">{selectedPayment.paymentReference || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Account Name:</strong> <span className="account-display">{selectedPayment.accountName || 'Not provided'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Payment Date:</strong> <span className="date-display">{selectedPayment.paymentDate || 'Not provided'}</span>
+                  </div>
+                  
+                  <div className="detail-item">
+                    <span className={`payment-status-badge ${selectedPayment.paymentStatus === 'pending-verification' ? 'pending' : 'verified'}`}>
+                      {selectedPayment.paymentStatus === 'pending-verification' ? '⏳ Pending Verification' : '✅ Verified'}
+                    </span>
+                    {selectedPayment.paymentStatus === 'verified' && selectedPayment.verifiedAt && (
+                      <div className="verified-date">
+                        Verified: {new Date(selectedPayment.verifiedAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+                             <div className="booking-details-actions">
+                 {selectedPayment.paymentStatus !== 'verified' && (selectedPayment.paymentReference || selectedPayment.accountName) && (
+                   <button 
+                     className="btn-verify-payment-modern"
+                     onClick={() => verifyPayment(patients.assessments.findIndex(b => b === selectedPayment))}
+                   >
+                     <i className="fas fa-check-circle"></i> Verify Payment
+                   </button>
+                 )}
+                 <button 
+                   className="btn-delete-booking-modal" 
+                   onClick={() => deletePayment(patients.assessments.findIndex(b => b === selectedPayment))}
+                 >
+                   <i className="fas fa-trash"></i> Delete Payment
+                 </button>
+                 <button className="btn-close-details" onClick={closePaymentDetails}>
+                   Close
+                 </button>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reschedule Modal */}
+      {isRescheduleModalOpen && selectedBookingForReschedule && (
+        <div className="auth-modal" style={{ display: 'block' }}>
+          <div className="auth-modal-content reschedule-modal-content">
+            <div className="auth-modal-header">
+              <h2>📅 Reschedule Appointment</h2>
+              <span className="guest-booking-close" onClick={closeRescheduleModal}>&times;</span>
+            </div>
+            <div className="auth-modal-body">
+              <div className="current-booking-info">
+                <h4>Current Appointment:</h4>
+                <p><strong>Patient:</strong> {selectedBookingForReschedule.childName}</p>
+                <p><strong>Guardian:</strong> {selectedBookingForReschedule.guardianName}</p>
+                <p><strong>Current Date:</strong> {new Date(selectedBookingForReschedule.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Current Time:</strong> {selectedBookingForReschedule.selectedTime}</p>
+                <p><strong>Branch:</strong> {selectedBookingForReschedule.branchLocation === 'blumentritt' ? 'Main Branch (Blumentritt)' : 'Satellite Branch (Del Rosario)'}</p>
+              </div>
+
+              <div className="reschedule-form">
+                <div className="form-group">
+                  <label htmlFor="rescheduleDate">New Appointment Date:</label>
+                  <input 
+                    type="date" 
+                    id="rescheduleDate" 
+                    value={rescheduleData.appointmentDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      setRescheduleData(prev => ({ ...prev, appointmentDate: e.target.value, selectedTime: '' }));
+                      loadTimeSlotsForReschedule(e.target.value);
+                    }}
+                    required 
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="rescheduleTime">Available Time Slots:</label>
+                  {rescheduleData.appointmentDate ? (
+                    <select 
+                      id="rescheduleTime" 
+                      value={rescheduleData.selectedTime}
+                      onChange={(e) => setRescheduleData(prev => ({ ...prev, selectedTime: e.target.value }))}
+                      required
+                    >
+                      <option value="">Select a time slot</option>
+                      {availableTimeSlotsForReschedule.length > 0 ? (
+                        availableTimeSlotsForReschedule.map(time => (
+                          <option key={time} value={time}>{time}</option>
+                        ))
+                      ) : (
+                        <option value="" disabled>No available slots for this date</option>
+                      )}
+                    </select>
+                  ) : (
+                    <p className="select-date-first">Please select a date first</p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="rescheduleReason">Reason for Rescheduling:</label>
+                  <select 
+                    id="rescheduleReason" 
+                    value={rescheduleData.reason}
+                    onChange={(e) => setRescheduleData(prev => ({ ...prev, reason: e.target.value }))}
+                  >
+                    <option value="">Select a reason</option>
+                    <option value="Professional unavailable">Professional unavailable</option>
+                    <option value="Patient request">Patient request</option>
+                    <option value="Emergency scheduling">Emergency scheduling</option>
+                    <option value="Administrative reasons">Administrative reasons</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="rescheduleNotes">Admin Notes (Optional):</label>
+                  <textarea 
+                    id="rescheduleNotes" 
+                    value={rescheduleData.adminNotes}
+                    onChange={(e) => setRescheduleData(prev => ({ ...prev, adminNotes: e.target.value }))}
+                    placeholder="Add any additional notes about this rescheduling..."
+                    rows="3"
+                  />
+                </div>
+              </div>
+
+              <div className="reschedule-actions">
+                <button 
+                  className="btn-confirm-reschedule" 
+                  onClick={handleRescheduleSubmit}
+                  disabled={rescheduleLoading || !rescheduleData.appointmentDate || !rescheduleData.selectedTime}
+                >
+                  {rescheduleLoading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> Rescheduling...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-calendar-check"></i> Confirm Reschedule
+                    </>
+                  )}
+                </button>
+                <button className="btn-cancel-reschedule" onClick={closeRescheduleModal}>
+                  Cancel
                 </button>
               </div>
             </div>

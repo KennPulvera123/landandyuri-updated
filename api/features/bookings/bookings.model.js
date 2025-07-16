@@ -93,6 +93,14 @@ const bookingSchema = new mongoose.Schema({
   // Admin Notes
   adminNotes: String,
   
+  // Reschedule tracking
+  rescheduledFrom: {
+    originalDate: Date,
+    originalTime: String,
+    rescheduledAt: Date,
+    reason: String
+  },
+  
   // Timestamps
   createdAt: {
     type: Date,

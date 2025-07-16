@@ -25,7 +25,10 @@ router.patch('/:id/payment', bookingsController.updatePaymentStatus);
 // Update booking details
 router.put('/:id', bookingsController.updateBooking);
 
-// Delete a booking
+// Reschedule booking (admin only)
+router.patch('/:id/reschedule', bookingsController.rescheduleBooking);
+
+// Delete booking
 router.delete('/:id', bookingsController.deleteBooking);
 
 // Get available time slots for a date
