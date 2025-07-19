@@ -2956,3 +2956,22 @@
         padding: 1rem;
     }
 } 
+
+/* Currency input field */
+.input-with-icon {
+  position: relative;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.input-with-icon input {
+  padding-left: 30px;
+} 

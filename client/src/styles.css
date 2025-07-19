@@ -240,6 +240,32 @@ body {
     padding: 0;
 }
 
+.highlighted-notice .notice-content {
+    background: linear-gradient(135deg, #effcff, #f5f9ff);
+    border: 2px solid #17a2b8;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.2);
+    animation: gentle-pulse 2s infinite;
+}
+
+@keyframes gentle-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.4); }
+    70% { box-shadow: 0 4px 15px rgba(23, 162, 184, 0.6); }
+    100% { box-shadow: 0 0 0 0 rgba(23, 162, 184, 0); }
+}
+
+.highlighted-notice .notice-content i {
+    color: #17a2b8;
+    font-size: 20px;
+}
+
+.highlighted-notice .notice-content p {
+    color: #0c5460;
+}
+
+.highlighted-notice .notice-content strong {
+    color: #0c5460;
+}
+
 .notice-content {
     background: linear-gradient(135deg, #E3F2FD, #F3E5F5);
     border: 2px solid #2196F3;
@@ -3706,17 +3732,122 @@ body {
     pointer-events: none;
 }
 
+/* Enhanced Search and Filter Controls */
+.branches-controls {
+    display: flex;
+    gap: 20px;
+    margin: 40px 0 20px 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-control {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+    min-width: 280px;
+}
+
+.search-control i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-orange);
+    font-size: 16px;
+    z-index: 2;
+}
+
+.branch-search-input {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    border: 2px solid rgba(255, 107, 53, 0.2);
+    border-radius: 25px;
+    font-size: 16px;
+    background: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
+}
+
+.branch-search-input:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.2);
+    transform: translateY(-2px);
+}
+
+.clear-search {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.clear-search:hover {
+    color: var(--primary-orange);
+    background: rgba(255, 107, 53, 0.1);
+}
+
+.filter-control {
+    position: relative;
+}
+
+.city-filter-select {
+    padding: 15px 20px;
+    border: 2px solid rgba(255, 107, 53, 0.2);
+    border-radius: 25px;
+    background: white;
+    font-size: 16px;
+    color: var(--text-dark);
+    min-width: 150px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1);
+}
+
+.city-filter-select:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.2);
+}
+
+.search-results-info {
+    text-align: center;
+    margin: 20px 0 30px 0;
+    color: var(--text-secondary);
+}
+
+.results-count {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.search-term {
+    font-style: italic;
+    margin-left: 5px;
+    color: var(--primary-orange);
+    font-weight: 500;
+}
+
 .branches-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 30px;
-    margin-top: 60px;
+    margin-top: 30px;
 }
 
 .magic-branch-card {
     background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
     border-radius: 20px;
-    padding: 30px;
+    padding: 25px;
     position: relative;
     overflow: hidden;
     box-shadow: 
@@ -3726,6 +3857,9 @@ body {
     border: 1px solid rgba(255, 107, 53, 0.1);
     animation: fadeInUp 0.8s ease-out;
     animation-fill-mode: both;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 .magic-branch-card::before {
@@ -3758,48 +3892,120 @@ body {
         0 8px 16px rgba(255, 107, 53, 0.1);
 }
 
+/* Branch Header with Icon and Status */
+.branch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
 .branch-icon {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
     position: relative;
     box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    flex-shrink: 0;
 }
 
 .branch-icon i {
-    font-size: 24px;
+    font-size: 20px;
     color: white;
+}
+
+.branch-status-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+/* Status badges removed */
+
+.distance-badge {
+    padding: 4px 10px;
+    background: rgba(255, 107, 53, 0.1);
+    color: var(--primary-orange);
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.distance-badge i {
+    font-size: 10px;
 }
 
 .branch-info {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .branch-name {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-dark);
     margin: 0 0 15px 0;
 }
 
+.branch-details {
+    margin-bottom: 20px;
+    flex: 1;
+}
+
 .branch-address {
     color: var(--text-secondary);
-    margin: 0 0 10px 0;
+    margin: 0 0 12px 0;
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 .branch-address i {
     color: var(--primary-orange);
     margin-top: 2px;
     flex-shrink: 0;
+    font-size: 14px;
+}
+
+.address-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.address-text strong {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.full-address {
+    font-size: 12px;
+    color: #999;
+    line-height: 1.3;
+}
+
+.branch-hours {
+    color: var(--text-secondary);
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.branch-hours i {
+    color: var(--primary-orange);
+    font-size: 13px;
 }
 
 .branch-phone {
@@ -3809,10 +4015,75 @@ body {
     align-items: center;
     gap: 8px;
     font-weight: 500;
+    font-size: 14px;
 }
 
 .branch-phone i {
     color: var(--primary-orange);
+    font-size: 13px;
+}
+
+.phone-link {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.phone-link:hover {
+    color: var(--secondary-orange);
+    text-decoration: underline;
+}
+
+/* Action buttons removed */
+
+/* No Results Section */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.no-results i {
+    font-size: 48px;
+    color: rgba(255, 107, 53, 0.3);
+    margin-bottom: 20px;
+}
+
+.no-results h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0 0 10px 0;
+}
+
+.no-results p {
+    font-size: 16px;
+    margin: 0 0 25px 0;
+    line-height: 1.5;
+}
+
+.reset-filters-btn {
+    background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.reset-filters-btn:hover {
+    background: linear-gradient(135deg, #ea580c, var(--primary-orange));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 107, 53, 0.3);
 }
 
 .branch-sparkles {
@@ -3849,24 +4120,94 @@ body {
     .branches-grid {
         grid-template-columns: 1fr;
         gap: 20px;
-        margin-top: 40px;
+        margin-top: 30px;
+    }
+    
+    .branches-controls {
+        flex-direction: column;
+        gap: 15px;
+        margin: 30px 0 20px 0;
+    }
+    
+    .search-control {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .filter-control {
+        width: 100%;
+    }
+    
+    .city-filter-select {
+        width: 100%;
     }
     
     .magic-branch-card {
         padding: 20px;
     }
     
+    .branch-header {
+        margin-bottom: 15px;
+    }
+    
     .branch-name {
-        font-size: 18px;
+        font-size: 17px;
+        margin-bottom: 12px;
     }
     
     .branch-icon {
-        width: 50px;
-        height: 50px;
+        width: 45px;
+        height: 45px;
     }
     
     .branch-icon i {
-        font-size: 20px;
+        font-size: 18px;
+    }
+    
+    .branch-status-badges {
+        gap: 6px;
+    }
+    
+    /* Status badge removed */
+    
+    .distance-badge {
+        font-size: 10px;
+    }
+    
+    /* Action buttons removed */
+}
+
+@media (max-width: 480px) {
+    .branches-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .branch-name {
+        font-size: 16px;
+    }
+    
+    .full-address {
+        font-size: 11px;
+    }
+    
+    .branch-address,
+    .branch-phone,
+    .branch-hours {
+        font-size: 13px;
+    }
+    
+    .branch-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .branch-icon i {
+        font-size: 16px;
+    }
+    
+    .branch-sparkles {
+        display: none;
     }
 }
 
@@ -5860,4 +6201,97 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 0.8; transform: translateY(0); }
+}
+
+.booking-warning {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-left: 4px solid #ffc107;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.booking-warning i {
+  color: #ffc107;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.booking-note {
+  margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-left: 4px solid #17a2b8;
+  border-radius: 4px;
+  color: #0c5460;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.booking-note i {
+  color: #17a2b8;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.booking-info {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.booking-info i {
+  color: #17a2b8;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.disabled-input-container {
+  position: relative;
+}
+
+.disabled-date-input {
+  background-color: #f5f5f5;
+  border-color: #ddd;
+  color: #999;
+  cursor: not-allowed;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  height: calc(2.25rem + 2px);
+}
+
+.disabled-input-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 0.25rem;
+  pointer-events: none;
+}
+
+.disabled-input-overlay i {
+  font-size: 14px;
+  color: #999;
+  margin-right: 6px;
 }

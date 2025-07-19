@@ -37,6 +37,14 @@ const AdminDashboard = () => {
   const [authEmail, setAuthEmail] = useState('test@gmail.com');
   const [authPassword, setAuthPassword] = useState('admin123');
 
+  // Confirmation modal states
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationType, setConfirmationType] = useState('');
+  const [confirmationData, setConfirmationData] = useState(null);
+  const [confirmationCallback, setConfirmationCallback] = useState(null);
+  const [confirmationTitle, setConfirmationTitle] = useState('');
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+
   useEffect(() => {
     // Check if user is already logged in as admin from main auth system
     const userData = localStorage.getItem('userData');
@@ -94,6 +102,16 @@ const AdminDashboard = () => {
     }));
   };
 
+  // Helper function to show confirmation modal
+  const showConfirmationDialog = (type, title, message, data, callback) => {
+    setConfirmationType(type);
+    setConfirmationTitle(title);
+    setConfirmationMessage(message);
+    setConfirmationData(data);
+    setConfirmationCallback(() => callback);
+    setShowConfirmation(true);
+  };
+  
   const viewBookingDetails = (booking) => {
     setSelectedBooking(booking);
     setIsBookingDetailsOpen(true);
@@ -105,159 +123,216 @@ const AdminDashboard = () => {
   };
 
   const closeBookingDetails = () => {
-    setIsBookingDetailsOpen(false);
     setSelectedBooking(null);
+    setIsBookingDetailsOpen(false);
   };
 
   const closePaymentDetails = () => {
-    setIsPaymentDetailsOpen(false);
     setSelectedPayment(null);
+    setIsPaymentDetailsOpen(false);
   };
 
   const deleteAssessment = (bookingIndex) => {
-    if (window.confirm('Are you sure you want to delete this assessment? The payment information will be kept.')) {
-      const updatedBookings = [...patients.assessments];
-      const booking = updatedBookings[bookingIndex];
-      
-      // Mark assessment as deleted but keep payment info
-      updatedBookings[bookingIndex] = {
-        ...booking,
-        assessmentDeleted: true,
-        deletedAt: new Date().toISOString(),
-        deletedType: 'assessment'
-      };
-      
-      // Update localStorage
-      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
-      
-      // Update state
-      setPatients(prev => ({
-        ...prev,
-        assessments: updatedBookings
-      }));
-      
-      // Close modal if open
-      if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
-        closeBookingDetails();
+    const booking = patients.assessments[bookingIndex];
+    
+    showConfirmationDialog(
+      'delete',
+      'Delete Assessment',
+      'Are you sure you want to delete this assessment? Payment information will be kept.',
+      booking,
+      () => {
+        const updatedBookings = [...patients.assessments];
+        const booking = updatedBookings[bookingIndex];
+        
+        // Mark as deleted but keep booking in the array
+        updatedBookings[bookingIndex] = {
+          ...booking,
+          assessmentDeleted: true,
+          assessmentDeletedAt: new Date().toISOString()
+        };
+        
+        // Update localStorage
+        localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+        
+        // Update state
+        setPatients(prev => ({
+          ...prev,
+          assessments: updatedBookings
+        }));
+        
+        // Close modal if open
+        if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+          closeBookingDetails();
+        }
       }
-    }
+    );
   };
 
   const deletePayment = (bookingIndex) => {
-    if (window.confirm('Are you sure you want to delete this payment information? The assessment will be kept.')) {
-      const updatedBookings = [...patients.assessments];
-      const booking = updatedBookings[bookingIndex];
-      
-      // Remove payment-specific fields but keep assessment
-      updatedBookings[bookingIndex] = {
-        ...booking,
-        paymentMethod: null,
-        paymentAmount: null,
-        paymentReference: null,
-        accountName: null,
-        paymentDate: null,
-        paymentStatus: null,
-        verifiedAt: null,
-        paymentDeleted: true,
-        paymentDeletedAt: new Date().toISOString()
-      };
-      
-      // Update localStorage
-      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
-      
-      // Update state
-      setPatients(prev => ({
-        ...prev,
-        assessments: updatedBookings
-      }));
-      
-      // Close modal if open
-      if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
-        closePaymentDetails();
+    const booking = patients.assessments[bookingIndex];
+    
+    showConfirmationDialog(
+      'delete',
+      'Delete Payment',
+      'Are you sure you want to delete this payment information? Assessment will be kept.',
+      booking,
+      () => {
+        const updatedBookings = [...patients.assessments];
+        const booking = updatedBookings[bookingIndex];
+        
+        // Remove payment-specific fields but keep assessment
+        updatedBookings[bookingIndex] = {
+          ...booking,
+          paymentMethod: null,
+          paymentAmount: null,
+          paymentReference: null,
+          accountName: null,
+          paymentDate: null,
+          paymentStatus: null,
+          verifiedAt: null,
+          paymentDeleted: true,
+          paymentDeletedAt: new Date().toISOString()
+        };
+        
+        // Update localStorage
+        localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+        
+        // Update state
+        setPatients(prev => ({
+          ...prev,
+          assessments: updatedBookings
+        }));
+        
+        // Close modal if open
+        if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
+          closePaymentDetails();
+        }
       }
-    }
+    );
   };
 
+  // Function to recalculate statistics based on current data
+  const refreshStats = () => {
+    // This forces a re-render of the stats section
+    setPatients(prev => ({ ...prev }));
+  };
+  
   const deleteEntireBooking = (bookingIndex) => {
-    if (window.confirm('Are you sure you want to delete this entire booking? This will remove both assessment and payment information permanently.')) {
-      const updatedBookings = [...patients.assessments];
-      updatedBookings.splice(bookingIndex, 1);
-      
-      // Update localStorage
-      localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
-      
-      // Update state
-      setPatients(prev => ({
-        ...prev,
-        assessments: updatedBookings
-      }));
-      
-      // Close modals if open
-      if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
-        closeBookingDetails();
+    const booking = patients.assessments[bookingIndex];
+    
+    showConfirmationDialog(
+      'delete',
+      'Delete Entire Booking',
+      'Are you sure you want to delete this entire booking? Assessment and payment information will be permanently removed.',
+      booking,
+      () => {
+        const updatedBookings = [...patients.assessments];
+        updatedBookings.splice(bookingIndex, 1);
+        
+        // Update localStorage
+        localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+        
+        // Update state with a force refresh
+        setPatients(prev => {
+          // Make a completely new object to ensure React detects the change
+          return {
+            ...prev,
+            assessments: [...updatedBookings]
+          };
+        });
+        
+        // Explicitly call refresh to update stats
+        setTimeout(() => refreshStats(), 50);
+        
+        // Close modals if open
+        if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+          closeBookingDetails();
+        }
+        if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
+          closePaymentDetails();
+        }
       }
-      if (selectedPayment && patients.assessments.findIndex(b => b === selectedPayment) === bookingIndex) {
-        closePaymentDetails();
-      }
-    }
+    );
   };
 
   const markBookingDone = (bookingIndex) => {
-    const updatedBookings = [...patients.assessments];
-    updatedBookings[bookingIndex] = {
-      ...updatedBookings[bookingIndex],
-      status: 'completed',
-      completedAt: new Date().toISOString()
-    };
+    const booking = patients.assessments[bookingIndex];
     
-    // Update localStorage
-    localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
-    
-    // Update state
-    setPatients(prev => ({
-      ...prev,
-      assessments: updatedBookings
-    }));
-    
-    // Close modal if it's the current booking
-    if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
-      closeBookingDetails();
-    }
+    showConfirmationDialog(
+      'mark-done',
+      'Mark as Completed',
+      'Are you sure you want to mark this appointment as completed?',
+      booking,
+      () => {
+        const updatedBookings = [...patients.assessments];
+        updatedBookings[bookingIndex] = {
+          ...updatedBookings[bookingIndex],
+          status: 'completed',
+          completedAt: new Date().toISOString()
+        };
+        
+        // Update localStorage
+        localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+        
+        // Update state
+        setPatients(prev => ({
+          ...prev,
+          assessments: updatedBookings
+        }));
+        
+        // Close modal if it's the current booking
+        if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+          closeBookingDetails();
+        }
+      }
+    );
   };
 
   const verifyPayment = (bookingIndex) => {
-    const updatedBookings = [...patients.assessments];
-    updatedBookings[bookingIndex] = {
-      ...updatedBookings[bookingIndex],
-      paymentStatus: 'verified',
-      verifiedAt: new Date().toISOString()
-    };
+    const booking = patients.assessments[bookingIndex];
     
-    // Update localStorage
-    localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
-    
-    // Update state
-    setPatients(prev => ({
-      ...prev,
-      assessments: updatedBookings
-    }));
-    
-    // Close modal if it's the current booking
-    if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
-      closeBookingDetails();
-    }
+    showConfirmationDialog(
+      'verify',
+      'Verify Payment',
+      'Are you sure you want to mark this payment as verified?',
+      booking,
+      () => {
+        const updatedBookings = [...patients.assessments];
+        updatedBookings[bookingIndex] = {
+          ...updatedBookings[bookingIndex],
+          paymentStatus: 'verified',
+          verifiedAt: new Date().toISOString()
+        };
+        
+        // Update localStorage
+        localStorage.setItem('assessmentBookings', JSON.stringify(updatedBookings));
+        
+        // Update state
+        setPatients(prev => ({
+          ...prev,
+          assessments: updatedBookings
+        }));
+        
+        // Close modal if it's the current booking
+        if (selectedBooking && patients.assessments.findIndex(b => b === selectedBooking) === bookingIndex) {
+          closeBookingDetails();
+        }
+      }
+    );
   };
 
   // Reschedule functions
   const openRescheduleModal = (booking) => {
-    setSelectedBookingForReschedule(booking);
-    setRescheduleData({
-      appointmentDate: '',
-      selectedTime: '',
-      reason: '',
-      adminNotes: booking.adminNotes || ''
-    });
-    setIsRescheduleModalOpen(true);
+    if (window.confirm(`Are you sure you want to reschedule the appointment for ${booking.childName} (${booking.guardianName})?\n\nCurrent appointment: ${new Date(booking.appointmentDate).toLocaleDateString()} at ${booking.selectedTime}`)) {
+      setSelectedBookingForReschedule(booking);
+      setRescheduleData({
+        appointmentDate: '',
+        selectedTime: '',
+        reason: '',
+        adminNotes: booking.adminNotes || ''
+      });
+      setIsRescheduleModalOpen(true);
+    }
   };
 
   const closeRescheduleModal = () => {
@@ -309,6 +384,17 @@ const AdminDashboard = () => {
       alert('Please select both a new date and time.');
       return;
     }
+    
+    showConfirmationDialog(
+      'reschedule',
+      'Confirm Reschedule',
+      'Are you sure you want to reschedule this appointment?',
+      {
+        ...selectedBookingForReschedule,
+        newAppointmentDate: rescheduleData.appointmentDate,
+        newSelectedTime: rescheduleData.selectedTime
+      },
+      () => {
 
     setRescheduleLoading(true);
     
@@ -349,6 +435,7 @@ const AdminDashboard = () => {
         assessments: updatedBookings
       }));
 
+      // Show success message using alert since we're already in the modal
       alert(`Booking successfully rescheduled from ${new Date(originalDate).toLocaleDateString()} at ${originalTime} to ${new Date(rescheduleData.appointmentDate).toLocaleDateString()} at ${rescheduleData.selectedTime}`);
       
       closeRescheduleModal();
@@ -364,6 +451,7 @@ const AdminDashboard = () => {
     } finally {
       setRescheduleLoading(false);
     }
+  });
   };
 
   const filterByBranch = (branch) => {
@@ -382,6 +470,14 @@ const AdminDashboard = () => {
       delete window.adminLogout;
     };
   }, []);
+  
+  // Update stats when patients data changes
+  useEffect(() => {
+    // This will trigger when patients state changes
+    // Stats will automatically update since they're calculated from patients state
+    console.log("Stats refreshed - Total bookings:", 
+      patients.assessments.filter(p => p.branchLocation === selectedBranch).length);
+  }, [patients.assessments, selectedBranch]);
 
   if (!isAuthenticated) {
     return (
@@ -476,8 +572,8 @@ const AdminDashboard = () => {
               </div>
             </div>
             
-            {/* Quick Stats */}
-            <div className="quick-stats">
+            {/* Quick Stats - With key for forcing refresh */}
+            <div className="quick-stats" key={`stats-${patients.assessments.length}-${selectedBranch}`}>
               <div className="stat-item">
                 <div className="stat-number" id="branchPendingCount">
                   {patients.assessments.filter(p => p.branchLocation === selectedBranch).length}
@@ -1119,6 +1215,111 @@ const AdminDashboard = () => {
                 </button>
                 <button className="btn-cancel-reschedule" onClick={closeRescheduleModal}>
                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {showConfirmation && (
+        <div className="confirmation-modal">
+          <div className="confirmation-content">
+            <div className="confirmation-header">
+              <h3>{confirmationTitle}</h3>
+              <button 
+                className="close-confirmation" 
+                onClick={() => setShowConfirmation(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="confirmation-body">
+              <div className={`confirmation-icon ${confirmationType}`}>
+                {confirmationType === 'delete' && <i className="fas fa-trash-alt"></i>}
+                {confirmationType === 'reschedule' && <i className="fas fa-calendar-alt"></i>}
+                {confirmationType === 'verify' && <i className="fas fa-check-circle"></i>}
+                {confirmationType === 'mark-done' && <i className="fas fa-check"></i>}
+              </div>
+              
+              <div className="confirmation-message">
+                <h4>{confirmationMessage}</h4>
+              </div>
+              
+              {confirmationData && (
+                <div className="confirmation-details">
+                  {confirmationData.childName && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">Patient:</span>
+                      <span className="confirmation-detail-value">{confirmationData.childName}</span>
+                    </div>
+                  )}
+                  {confirmationData.guardianName && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">Guardian:</span>
+                      <span className="confirmation-detail-value">{confirmationData.guardianName}</span>
+                    </div>
+                  )}
+                  {confirmationData.appointmentDate && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">Date:</span>
+                      <span className="confirmation-detail-value">
+                        {new Date(confirmationData.appointmentDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {confirmationData.selectedTime && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">Time:</span>
+                      <span className="confirmation-detail-value">{confirmationData.selectedTime}</span>
+                    </div>
+                  )}
+                  {confirmationData.newAppointmentDate && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">New Date:</span>
+                      <span className="confirmation-detail-value">
+                        {new Date(confirmationData.newAppointmentDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
+                  {confirmationData.newSelectedTime && (
+                    <div className="confirmation-detail-item">
+                      <span className="confirmation-detail-label">New Time:</span>
+                      <span className="confirmation-detail-value">{confirmationData.newSelectedTime}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <div className="confirmation-actions">
+                <button 
+                  className={`btn-confirm ${confirmationType === 'delete' ? 'delete' : 'proceed'}`}
+                  onClick={() => {
+                    if (confirmationCallback) {
+                      confirmationCallback();
+                    }
+                    setShowConfirmation(false);
+                  }}
+                >
+                  {confirmationType === 'delete' && <>
+                    <i className="fas fa-trash-alt"></i> Delete
+                  </>}
+                  {confirmationType === 'reschedule' && <>
+                    <i className="fas fa-calendar-check"></i> Reschedule
+                  </>}
+                  {confirmationType === 'verify' && <>
+                    <i className="fas fa-check-circle"></i> Verify
+                  </>}
+                  {confirmationType === 'mark-done' && <>
+                    <i className="fas fa-check"></i> Mark as Done
+                  </>}
+                </button>
+                <button 
+                  className="btn-confirm cancel"
+                  onClick={() => setShowConfirmation(false)}
+                >
+                  <i className="fas fa-times"></i> Cancel
                 </button>
               </div>
             </div>

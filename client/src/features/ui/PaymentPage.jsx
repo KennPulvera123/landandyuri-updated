@@ -10,7 +10,8 @@ const PaymentPage = () => {
   const [confirmationData, setConfirmationData] = useState({
     paymentDate: '',
     paymentReference: '',
-    accountName: ''
+    accountName: '',
+    amountPaid: '2000'
   });
   
   const PAYMENT_FORM_STORAGE_KEY = 'paymentFormData';
@@ -896,6 +897,23 @@ const PaymentPage = () => {
                             onChange={handleInputChange}
                             required 
                           />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor="amount-paid">Amount Paid</label>
+                          <div className="input-with-icon">
+                            <span className="currency-symbol">₱</span>
+                            <input 
+                              type="text" 
+                              id="amount-paid" 
+                              name="amountPaid" 
+                              placeholder="Enter amount paid" 
+                              value={confirmationData.amountPaid}
+                              onChange={handleInputChange}
+                              pattern="[0-9]+" 
+                              inputMode="numeric"
+                              required 
+                            />
+                          </div>
                         </div>
                       </div>
 

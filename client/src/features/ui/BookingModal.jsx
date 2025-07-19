@@ -24,9 +24,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
   const [error, setError] = useState('');
   const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // 'idle', 'saving', 'saved'
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [professionalAvailability, setProfessionalAvailability] = useState({});
-  const [alternativeProfessionals, setAlternativeProfessionals] = useState([]);
-  const [showWaitlist, setShowWaitlist] = useState(false);
+  // Professional availability features removed as requested
 
   // Load saved form data on component mount
   useEffect(() => {
@@ -50,6 +48,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
         localStorage.removeItem(FORM_STORAGE_KEY);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-save form data with debouncing and meaningful data check
@@ -93,6 +92,19 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
       ...prev,
       [name]: value
     }));
+    
+    // If branch location is changed, reset the date and time fields
+    if (name === 'branchLocation' && value) {
+      // Clear any existing date and time selections
+      setFormData(prev => ({
+        ...prev,
+        appointmentDate: '',
+        selectedTime: ''
+      }));
+      
+      // Reset available time slots
+      setAvailableTimeSlots([]);
+    }
   };
 
   const calculateAge = (birthday) => {
@@ -153,7 +165,6 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
       const response = await axios.get(`/api/bookings/availability/${date}?branch=${formData.branchLocation}&professional=${formData.selectedProfessional}`);
       if (response.data.success) {
         setAvailableTimeSlots(response.data.availableSlots);
-        setProfessionalAvailability(response.data.professionalAvailability || {});
       }
     } catch (error) {
       console.error('Error loading time slots:', error);
@@ -165,134 +176,18 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
     }
   };
 
-  const checkProfessionalAvailability = async (professional, date, branch) => {
-    if (!professional || !date || !branch) return;
-    
-    try {
-      const response = await axios.get(`/api/professionals/availability?professional=${professional}&date=${date}&branch=${branch}`);
-      if (response.data.success) {
-        const availability = response.data.availability;
-        setProfessionalAvailability(prev => ({
-          ...prev,
-          [professional]: availability
-        }));
-        
-        // If professional is not available, suggest alternatives
-        if (!availability.isAvailable) {
-          setAlternativeProfessionals(response.data.alternatives || []);
-          setShowWaitlist(true);
-        } else {
-          setAlternativeProfessionals([]);
-          setShowWaitlist(false);
-        }
-      }
-    } catch (error) {
-      console.error('Error checking professional availability:', error);
-      
-      // Mock data for demonstration purposes (remove when API is implemented)
-      const mockAvailability = generateMockAvailability(professional, date, branch);
-      
-      setProfessionalAvailability(prev => ({
-        ...prev,
-        [professional]: mockAvailability.availability
-      }));
-      
-      if (!mockAvailability.availability.isAvailable) {
-        setAlternativeProfessionals(mockAvailability.alternatives);
-        setShowWaitlist(true);
-      } else {
-        setAlternativeProfessionals([]);
-        setShowWaitlist(false);
-      }
-    }
-  };
-
-  // Mock data generator for demonstration (remove when API is implemented)
-  const generateMockAvailability = (professional, date, branch) => {
-    const selectedDate = new Date(date);
-    const dayOfWeek = selectedDate.getDay();
-    
-    // Simulate scenarios based on conditions
-    const scenarios = [
-      // Weekends - reduced availability
-      {
-        condition: dayOfWeek === 0 || dayOfWeek === 6,
-        availability: {
-          isAvailable: false,
-          reason: 'Weekends - Limited availability',
-          nextAvailable: new Date(selectedDate.getTime() + (8 - dayOfWeek) * 24 * 60 * 60 * 1000).toISOString()
-        },
-        alternatives: [
-          {
-            id: 'developmental-pediatrician',
-            name: 'Dr. Maria Santos',
-            specialty: 'Developmental Pediatrician',
-            availability: 'Saturday mornings only'
-          }
-        ]
-      },
-      // Random unavailability simulation
-      {
-        condition: Math.random() > 0.7,
-        availability: {
-          isAvailable: false,
-          reason: 'Professional attending conference',
-          nextAvailable: new Date(selectedDate.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        alternatives: [
-          {
-            id: professional === 'developmental-pediatrician' ? 'occupational-therapist' : 'developmental-pediatrician',
-            name: professional === 'developmental-pediatrician' ? 'Ms. Anna Cruz' : 'Dr. Juan Dela Cruz',
-            specialty: professional === 'developmental-pediatrician' ? 'Occupational Therapist' : 'Developmental Pediatrician',
-            availability: 'Same day available'
-          },
-          {
-            id: 'speech-language-pathologist',
-            name: 'Ms. Linda Garcia',
-            specialty: 'Speech and Language Pathologist',
-            availability: 'Available tomorrow'
-          }
-        ]
-      }
-    ];
-    
-    // Find matching scenario
-    const matchedScenario = scenarios.find(scenario => scenario.condition);
-    
-    if (matchedScenario) {
-      return matchedScenario;
-    }
-    
-    // Default to available
-    return {
-      availability: {
-        isAvailable: true,
-        nextAvailable: null,
-        reason: null
-      },
-      alternatives: []
-    };
-  };
+  // Professional availability checking removed as requested - secretary will contact if needed
 
   const handleProfessionalChange = (e) => {
-    const professional = e.target.value;
     handleChange(e);
-    
-    // Check availability when professional is selected
-    if (professional && formData.appointmentDate && formData.branchLocation) {
-      checkProfessionalAvailability(professional, formData.appointmentDate, formData.branchLocation);
-    }
+    // Professional availability checking removed - secretary will contact if needed
   };
 
   const handleDateChange = (e) => {
     const date = e.target.value;
     handleChange(e);
     loadTimeSlots(date);
-    
-    // Also check professional availability for the new date
-    if (formData.selectedProfessional && formData.branchLocation) {
-      checkProfessionalAvailability(formData.selectedProfessional, date, formData.branchLocation);
-    }
+    // Professional availability checking removed - secretary will contact if needed
   };
 
   const clearSavedData = () => {
@@ -560,10 +455,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
               </div>
               
               {/* Important Scheduling Notice */}
-              <div className="scheduling-notice">
+              <div className="scheduling-notice highlighted-notice">
                 <div className="notice-content">
                   <i className="fas fa-info-circle"></i>
-                  <p><strong>📅 Scheduling Policy:</strong> If your selected professional is not available at the time of booking, our secretary will contact you to reschedule your appointment or suggest an alternative time that works for both you and the professional.</p>
+                  <p><strong>📅 Scheduling Policy:</strong> If your selected professional is not available at the date and time of booking, our secretary will contact you to reschedule your appointment or suggest an alternative time that works for both you and the professional.</p>
                 </div>
               </div>
               
@@ -584,93 +479,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                   </div>
                 )}
                 
-                {/* Professional Availability Status */}
-                {formData.selectedProfessional && formData.appointmentDate && professionalAvailability[formData.selectedProfessional] && (
-                  <div className="professional-availability">
-                    {professionalAvailability[formData.selectedProfessional].isAvailable ? (
-                      <div className="availability-status available">
-                        <i className="fas fa-check-circle"></i>
-                        <span>✅ Professional is available on selected date</span>
-                      </div>
-                    ) : (
-                      <div className="availability-status unavailable">
-                        <i className="fas fa-exclamation-triangle"></i>
-                        <span>⚠️ Professional is not available on selected date</span>
-                        {professionalAvailability[formData.selectedProfessional].nextAvailable && (
-                          <p className="next-available">
-                            Next available: {new Date(professionalAvailability[formData.selectedProfessional].nextAvailable).toLocaleDateString()}
-                          </p>
-                        )}
-                        {professionalAvailability[formData.selectedProfessional].reason && (
-                          <p className="unavailability-reason">
-                            Reason: {professionalAvailability[formData.selectedProfessional].reason}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {/* Alternative Professionals */}
-                {alternativeProfessionals.length > 0 && (
-                  <div className="alternative-professionals">
-                    <h5><i className="fas fa-users"></i> Alternative Professionals Available</h5>
-                    <div className="alternatives-list">
-                      {alternativeProfessionals.map((alt, index) => (
-                        <div key={index} className="alternative-option">
-                          <button 
-                            type="button"
-                            className="btn-alternative"
-                            onClick={() => {
-                              setFormData(prev => ({ ...prev, selectedProfessional: alt.id }));
-                              setShowWaitlist(false);
-                              setAlternativeProfessionals([]);
-                            }}
-                          >
-                            <span className="alt-name">{alt.name}</span>
-                            <span className="alt-specialty">{alt.specialty}</span>
-                            <span className="alt-availability">Available {alt.availability}</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Waitlist Option */}
-                {showWaitlist && !professionalAvailability[formData.selectedProfessional]?.isAvailable && (
-                  <div className="waitlist-section">
-                    <div className="waitlist-info">
-                      <h5><i className="fas fa-clock"></i> Join Waitlist</h5>
-                      <p>Would you like to be notified when this professional becomes available?</p>
-                    </div>
-                    <div className="waitlist-actions">
-                      <button 
-                        type="button"
-                        className="btn-waitlist"
-                        onClick={() => {
-                          alert('You have been added to the waitlist! We will notify you when the professional becomes available.');
-                          setShowWaitlist(false);
-                        }}
-                      >
-                        <i className="fas fa-bell"></i>
-                        Join Waitlist
-                      </button>
-                      <button 
-                        type="button"
-                        className="btn-choose-different"
-                        onClick={() => {
-                          setFormData(prev => ({ ...prev, selectedProfessional: '', appointmentDate: '' }));
-                          setShowWaitlist(false);
-                          setAlternativeProfessionals([]);
-                        }}
-                      >
-                        <i className="fas fa-calendar-alt"></i>
-                        Choose Different Date
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* No availability status section - removed as requested */}
               </div>
             </div>
 
@@ -680,15 +489,37 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="appointmentDate">Preferred Date</label>
-                  <input 
-                    type="date" 
-                    id="appointmentDate" 
-                    name="appointmentDate" 
-                    value={formData.appointmentDate}
-                    onChange={handleDateChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    required 
-                  />
+                  {formData.branchLocation ? (
+                    <input 
+                      type="date" 
+                      id="appointmentDate" 
+                      name="appointmentDate" 
+                      value={formData.appointmentDate}
+                      onChange={handleDateChange}
+                      min={new Date().toISOString().split('T')[0]}
+                      required 
+                    />
+                  ) : (
+                    <>
+                      <div className="disabled-input-container">
+                        <input 
+                          type="date" 
+                          id="appointmentDate" 
+                          name="appointmentDate"
+                          disabled={true}
+                          title="Please select a branch first"
+                          className="disabled-date-input"
+                        />
+                        <div className="disabled-input-overlay">
+                          <i className="fas fa-lock"></i>
+                        </div>
+                      </div>
+                      <div className="booking-info">
+                        <i className="fas fa-info-circle"></i>
+                        <span>Select a branch location above to enable date selection</span>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className="form-group">
                   <label htmlFor="selectedTime">Available Time Slots</label>
@@ -708,6 +539,18 @@ const BookingModal = ({ isOpen, onClose, onSubmit, user }) => {
                       <option value="" disabled>No available slots</option>
                     )}
                   </select>
+                  {formData.appointmentDate && !formData.branchLocation && (
+                    <div className="booking-warning">
+                      <i className="fas fa-exclamation-triangle"></i>
+                      <span>Please select a branch location first to view available time slots</span>
+                    </div>
+                  )}
+                  {formData.appointmentDate && formData.branchLocation && availableTimeSlots.length === 0 && (
+                    <div className="booking-note">
+                      <i className="fas fa-info-circle"></i>
+                      <span>No available slots for the selected date. Please try another date.</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
